@@ -3,6 +3,7 @@
     "@modelcontextprotocol/sdk": "^1.22.0",
     "axios": "^1.13.6",
     "express": "^5.1.0",
+    "qs": "^6.15.1",
     "zod": "^3.25.76"
   },
   "name": "gfw-mcp-js",

@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
+import { generateVesselProfileUrl } from '../lib/map-url-generator.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
 import { EventsResponse } from '../lib/types.js';
 
@@ -17,7 +18,7 @@ export function register(server: McpServer) {
     {
       title: 'Vessel Events Lookup',
       description:
-        'Retrieve fishing events from the Global Fishing Watch API. Filter by event type, date range, vessel ID, and region. Results include event metadata, positions, and vessel info.',
+        "Retrieve fishing events from the Global Fishing Watch API. Filter by event type, date range, vessel ID, and region. Results include event metadata, positions, and vessel info. Each entry includes a mapUrl linking to the vessel's profile on the Global Fishing Watch map — share this URL with the user when presenting results.",
       inputSchema: {
         eventType: z
           .enum(['fishing', 'encounter', 'port_visit', 'loitering'])
@@ -36,7 +37,7 @@ export function register(server: McpServer) {
           .string()
           .regex(
             /^\d{4}-\d{2}-\d{2}$/,
-            'Use ISO 8601 date format YYYY-MM-DD for endDate.',
+            'Use ISO 8601 date format YYYY-MM-DD for endDate. IMPORTANT! this date is exclusive.',
           )
           .optional()
           .describe(
@@ -82,6 +83,12 @@ export function register(server: McpServer) {
             vesselFlag: z.string().nullish(),
           }),
         ),
+        mapUrl: z
+          .string()
+          .nullish()
+          .describe(
+            "Global Fishing Watch map URL to view the vessel's profile for the queried period. IMPORTANT!! Always share this full link with the user when presenting results.",
+          ),
       },
     },
     async ({ eventType, startDate, endDate, vesselId, limit, offset }) => {
@@ -122,12 +129,20 @@ export function register(server: McpServer) {
           vesselFlag: e.vessel.flag,
         }));
 
+        const mapUrl =
+          vesselId && startDate && endDate
+            ? generateVesselProfileUrl(vesselId, startDate, endDate, [
+                eventType,
+              ])
+            : null;
+
         const output = {
           total: data.total,
           limit: data.limit,
           offset: data.offset,
           nextOffset: data.nextOffset || 0,
           entries,
+          mapUrl,
         };
 
         return createToolResponse(JSON.stringify(output, null, 2), output);

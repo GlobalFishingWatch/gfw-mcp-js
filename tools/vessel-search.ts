@@ -64,7 +64,7 @@ export function register(server: McpServer) {
           )
           .optional()
           .describe(
-            'Filter for vessels active on or before this date (ISO 8601).',
+            'Filter for vessels active on or before this date (ISO 8601). IMPORTANT! this date is exclusive.',
           ),
         limit: z
           .number()
@@ -94,7 +94,7 @@ export function register(server: McpServer) {
               .string()
               .nullish()
               .describe(
-                "Global Fishing Watch map URL to view this vessel's profile and track. Share this link with the user when presenting vessel results.",
+                "Global Fishing Watch map URL to view this vessel's profile and track. IMPORTANT!! Always share this full link with the user when presenting vessel results.",
               ),
           }),
         ),

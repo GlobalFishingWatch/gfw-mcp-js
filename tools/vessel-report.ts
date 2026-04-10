@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
+import { generateReportUrl } from '../lib/map-url-generator.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
 import {
   ACTIVITY_DATASETS,
@@ -10,35 +11,13 @@ import {
   ReportResponse,
 } from '../lib/types.js';
 
-function buildGfwMapUrl(
-  regionType: 'MPA' | 'EEZ',
-  regionId: string,
-  startDate: string,
-  endDate: string,
-  flags: string[],
-): string {
-  const regionParam = regionType === 'MPA' ? 'mpa' : 'eez';
-  const regionDataset = REGION_DATASETS[regionType];
-
-  let url = `https://globalfishingwatch.org/map/fishing-activity/default-public/report/${regionDataset}/${regionId}?dvIn[0][id]=context-layer-${regionParam}&dvIn[0][cfg][vis]=true&start=${startDate}&end=${endDate}`;
-
-  if (flags.length > 0) {
-    url += '&dvIn[1][id]=ais';
-    flags.forEach((flagCode, index) => {
-      url += `&dvIn[1][cfg][filters][flag][${index}]=${encodeURIComponent(flagCode)}`;
-    });
-  }
-
-  return url;
-}
-
 export function register(server: McpServer) {
   server.registerTool(
     'mpa-vessel-report',
     {
-      title: 'Fishing Hours Calculator',
+      title: 'Activity Hours Calculator',
       description:
-        'Returns the number of fishing hours for a given time period in a specific Marine Protected Area (MPA) or Exclusive Economic Zone (EEZ) identified by its canonical region ID. Use the Protected Region ID Lookup tool first if you only know the human-readable name. Optionally filters by one or multiple vessel flag states. This tool calculates and reports the total fishing activity hours detected within the region boundaries during the specified date range. The tool also provides a link to the Global Fishing Watch (GFW) map where users can view the detailed data and navigate the fishing activity visually.',
+        'Returns the number of activity hours for a given time period in a specific Marine Protected Area (MPA) or Exclusive Economic Zone (EEZ) identified by its canonical region ID. Use the Protected Region ID Lookup tool first if you only know the human-readable name. Optionally filters by one or multiple vessel flag states. This tool calculates and reports the total fishing activity hours detected within the region boundaries during the specified date range. The tool also provides a link to the Global Fishing Watch (GFW) map where users can view the detailed data and navigate the fishing activity visually.',
       inputSchema: {
         regionType: z
           .enum(['MPA', 'EEZ'])
@@ -58,7 +37,7 @@ export function register(server: McpServer) {
         endDate: z
           .string()
           .describe(
-            'End date of the report period (ISO 8601 format: YYYY-MM-DD)',
+            'End date of the report period (ISO 8601 format: YYYY-MM-DD). IMPORTANT! this date is exclusive.',
           ),
         type: z
           .enum(['FISHING', 'PRESENCE'])
@@ -102,6 +81,13 @@ export function register(server: McpServer) {
           .optional()
           .describe(
             'Optional list of vessel types to filter by. Only applicable when type is "PRESENCE". When omitted, all vessel types are included.',
+          ),
+        speeds: z
+          .array(z.enum(['2-4', '4-6', '6-10', '10-15', '15-25', '>25']))
+          .min(1)
+          .optional()
+          .describe(
+            'Optional list of speed ranges to filter by. Only applicable when type is "PRESENCE". When omitted, all speeds are included.',
           ),
         geartypes: z
           .array(
@@ -151,6 +137,10 @@ export function register(server: McpServer) {
           .array(z.string())
           .optional()
           .describe('Vessel type filters applied (if any).'),
+        speeds: z
+          .array(z.string())
+          .optional()
+          .describe('Speed range filters applied (if any).'),
         geartypes: z
           .array(z.string())
           .optional()
@@ -158,7 +148,7 @@ export function register(server: McpServer) {
         gfwMapUrl: z
           .string()
           .describe(
-            'URL to the Global Fishing Watch map showing the detailed fishing activity data for the specified region and date range',
+            'URL to the Global Fishing Watch map showing the detailed fishing activity data for the specified region and date range. IMPORTANT!! Always share this full link with the user when presenting reports. ',
           ),
         topVessels: z
           .array(
@@ -182,6 +172,7 @@ export function register(server: McpServer) {
       type,
       flags,
       vesselTypes,
+      speeds,
       geartypes,
     }) => {
       const activityType: ActivityType = type ?? 'FISHING';
@@ -207,12 +198,18 @@ export function register(server: McpServer) {
 
         const activityDataset = ACTIVITY_DATASETS[activityType];
         const flagList = Array.isArray(flags) ? flags : [];
+        const speedList = Array.isArray(speeds) ? speeds : [];
         const vesselTypeList = Array.isArray(vesselTypes) ? vesselTypes : [];
         const geartypeList = Array.isArray(geartypes) ? geartypes : [];
 
         const filters = [];
         if (flagList.length > 0) {
           filters.push(`flag IN (${flagList.map((f) => `'${f}'`).join(',')})`);
+        }
+        if (speedList.length > 0) {
+          filters.push(
+            `speed IN (${speedList.map((s) => `'${s}'`).join(',')})`,
+          );
         }
         if (vesselTypeList.length > 0) {
           filters.push(
@@ -260,12 +257,18 @@ export function register(server: McpServer) {
             hours: row.hours,
           }));
 
-        const gfwMapUrl = buildGfwMapUrl(
-          regionType,
+        const gfwMapUrl = generateReportUrl(
           regionId,
+          regionType,
+          activityType,
           startDate,
           endDate,
-          flagList,
+          {
+            speed: speedList,
+            vesselType: vesselTypeList,
+            geartype: geartypeList,
+            flag: flagList,
+          },
         );
 
         const output = {
@@ -276,13 +279,14 @@ export function register(server: McpServer) {
           topVessels,
           ...(flagList.length > 0 && { flags: flagList }),
           ...(vesselTypeList.length > 0 && { vesselTypes: vesselTypeList }),
+          ...(speedList.length > 0 && { speeds: speedList }),
           ...(geartypeList.length > 0 && { geartypes: geartypeList }),
           gfwMapUrl,
         };
 
         const flagText =
           flagList.length > 0 ? `\nFlag Filters: ${flagList.join(', ')}` : '';
-        const responseText = `Fishing Hours Report for ${regionType} ID: ${regionId}${flagText}
+        const responseText = `${activityType === 'FISHING' ? 'Fishing Hours Report' : 'Presence Hours Report'} for ${regionType} ID: ${regionId}${flagText}
 Date Range: ${startDate} to ${endDate}
 
 Total ${activityType} Hours: ${output.fishingHours} hours
