@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
+import { generateVesselProfileUrl } from '../lib/map-url-generator.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
 import { VesselSearchResponse } from '../lib/types.js';
 
@@ -12,7 +13,7 @@ export function register(server: McpServer) {
     {
       title: 'Vessel Search',
       description:
-        'Search vessels by name, MMSI, IMO, callsign, flag, gear type, or activity date range. Returns basic vessel metadata and identifiers. All filters are optional but at least one should be provided for meaningful results.',
+        "Search vessels by name, MMSI, IMO, callsign, flag, gear type, or activity date range. Returns basic vessel metadata and identifiers, including a mapUrl for each vessel. Use the mapUrl to link the user directly to the vessel's profile on the Global Fishing Watch map. All filters are optional but at least one should be provided for meaningful results.",
       inputSchema: {
         name: z
           .string()
@@ -89,11 +90,26 @@ export function register(server: McpServer) {
             gearType: z.string().nullish(),
             activeFrom: z.string().nullish(),
             activeTo: z.string().nullish(),
+            mapUrl: z
+              .string()
+              .nullish()
+              .describe(
+                "Global Fishing Watch map URL to view this vessel's profile and track. Share this link with the user when presenting vessel results.",
+              ),
           }),
         ),
       },
     },
-    async ({ name, mmsi, imo, callsign, flag, activeFrom, activeTo, limit }) => {
+    async ({
+      name,
+      mmsi,
+      imo,
+      callsign,
+      flag,
+      activeFrom,
+      activeTo,
+      limit,
+    }) => {
       try {
         const maxResults = limit ?? 10;
 
@@ -126,16 +142,22 @@ export function register(server: McpServer) {
         const results = data.entries.map((entry) => {
           const info = entry.selfReportedInfo[0];
           const combined = entry.combinedSourcesInfo[0];
+          const vesselId = info?.id ?? combined?.vesselId ?? '';
+          const from = info?.transmissionDateFrom;
+          const to = info?.transmissionDateTo;
           return {
-            vesselId: info?.id ?? combined?.vesselId ?? '',
+            vesselId,
             name: info?.shipname,
             mmsi: info?.ssvid,
             imo: info?.imo ?? undefined,
             callsign: info?.callsign ?? undefined,
             flag: info?.flag,
             gearType: combined?.geartypes?.[0]?.name,
-            activeFrom: info?.transmissionDateFrom,
-            activeTo: info?.transmissionDateTo,
+            activeFrom: from,
+            activeTo: to,
+            mapUrl: vesselId
+              ? generateVesselProfileUrl(vesselId, from, to)
+              : null,
           };
         });
 
