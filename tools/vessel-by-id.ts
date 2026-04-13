@@ -47,7 +47,7 @@ export function register(server: McpServer) {
       try {
         const params: Record<string, string> = {
           'datasets[0]': DATASET,
-          'ids[0]': ids.join(','),
+          ...Object.fromEntries(ids.map((id, i) => [`ids[${i}]`, id])),
         };
 
         const response = await gfwFetch('/v3/vessels', params);

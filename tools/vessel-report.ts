@@ -37,7 +37,7 @@ export function register(server: McpServer) {
         endDate: z
           .string()
           .describe(
-            'End date of the report period (ISO 8601 format: YYYY-MM-DD). IMPORTANT! this date is exclusive.',
+            'End date of the report period (ISO 8601 format: YYYY-MM-DD). IMPORTANT! this date is exclusive. The range between startDate and endDate must not exceed 1 year.',
           ),
         type: z
           .enum(['FISHING', 'PRESENCE'])
@@ -117,6 +117,16 @@ export function register(server: McpServer) {
           .describe(
             'Optional list of gear types to filter by. Only applicable when type is "FISHING". When omitted, all gear types are included.',
           ),
+        groupBy: z
+          .enum(['VESSEL_ID', 'FLAG', 'GEARTYPE', 'FLAGANDGEARTYPE'])
+          .optional()
+          .describe(
+            'How to group the report results. ' +
+              '"VESSEL_ID" (default): results grouped per individual vessel. ' +
+              '"FLAG": results aggregated by flag state. ' +
+              '"GEARTYPE": results aggregated by gear type. ' +
+              '"FLAGANDGEARTYPE": results aggregated by flag state and gear type combined.',
+          ),
       },
       outputSchema: {
         regionType: z.enum(['MPA', 'EEZ', 'RFMO']),
@@ -161,7 +171,12 @@ export function register(server: McpServer) {
               hours: z.number(),
             }),
           )
-          .describe('Top 10 vessels by fishing/presence hours in the region'),
+          .optional()
+          .describe('Top 10 vessels by hours. Only present when groupBy is "VESSEL_ID".'),
+        rows: z
+          .array(z.record(z.string().or(z.number())))
+          .optional()
+          .describe('Aggregated rows sorted by hours descending. Present when groupBy is "FLAG", "GEARTYPE", or "FLAGANDGEARTYPE". Each row contains the grouping fields plus "hours".'),
       },
     },
     async ({
@@ -174,9 +189,20 @@ export function register(server: McpServer) {
       vesselTypes,
       speeds,
       geartypes,
+      groupBy,
     }) => {
       const activityType: ActivityType = type ?? 'FISHING';
+      const groupByValue = groupBy ?? 'VESSEL_ID';
       try {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const msInYear = 365 * 24 * 60 * 60 * 1000;
+        if (end.getTime() - start.getTime() > msInYear) {
+          return createErrorResponse(
+            'The report date range cannot exceed 1 year. Please reduce the range between startDate and endDate.',
+          );
+        }
+
         if (
           activityType === 'FISHING' &&
           Array.isArray(vesselTypes) &&
@@ -230,7 +256,7 @@ export function register(server: McpServer) {
           'temporal-resolution': 'ENTIRE',
           'region-id': regionId,
           'region-dataset': REGION_DATASETS[regionType],
-          'group-by': 'VESSEL_ID',
+          'group-by': groupByValue,
         };
         if (filters.length > 0) {
           params['filters[0]'] = filters.join(' AND ');
@@ -245,17 +271,50 @@ export function register(server: McpServer) {
 
         const fishingHours = allRows.reduce((sum, row) => sum + row.hours, 0);
 
-        const topVessels = [...allRows]
-          .sort((a, b) => b.hours - a.hours)
-          .slice(0, 10)
-          .map((row) => ({
-            vesselId: row.vesselId,
-            shipName: row.shipName,
-            mmsi: row.mmsi,
-            flag: row.flag,
-            geartype: row.geartype,
-            hours: row.hours,
-          }));
+        const topVessels =
+          groupByValue === 'VESSEL_ID'
+            ? [...allRows]
+                .sort((a, b) => b.hours - a.hours)
+                .slice(0, 10)
+                .map((row) => ({
+                  vesselId: row.vesselId,
+                  shipName: row.shipName,
+                  mmsi: row.mmsi,
+                  flag: row.flag,
+                  geartype: row.geartype,
+                  hours: row.hours,
+                }))
+            : undefined;
+
+        const rows = (() => {
+          if (groupByValue === 'VESSEL_ID') return undefined;
+
+          const aggregated = new Map<string, { key: Record<string, string | undefined>; hours: number }>();
+          for (const row of allRows) {
+            const key =
+              groupByValue === 'FLAG'
+                ? row.flag
+                : groupByValue === 'GEARTYPE'
+                  ? row.geartype
+                  : `${row.flag}__${row.geartype}`;
+            const keyFields: Record<string, string | undefined> =
+              groupByValue === 'FLAG'
+                ? { flag: row.flag }
+                : groupByValue === 'GEARTYPE'
+                  ? { geartype: row.geartype }
+                  : { flag: row.flag, geartype: row.geartype };
+            const existing = aggregated.get(key);
+            if (existing) {
+              existing.hours += row.hours;
+            } else {
+              aggregated.set(key, { key: keyFields, hours: row.hours });
+            }
+          }
+
+          return [...aggregated.values()]
+            .sort((a, b) => b.hours - a.hours)
+            .map(({ key, hours }) => ({ ...key, hours }));
+        })();
 
         const gfwMapUrl = generateReportUrl(
           regionId,
@@ -276,7 +335,8 @@ export function register(server: McpServer) {
           regionId,
           dateRange: { start: startDate, end: endDate },
           fishingHours,
-          topVessels,
+          ...(topVessels && { topVessels }),
+          ...(rows && { rows }),
           ...(flagList.length > 0 && { flags: flagList }),
           ...(vesselTypeList.length > 0 && { vesselTypes: vesselTypeList }),
           ...(speedList.length > 0 && { speeds: speedList }),
