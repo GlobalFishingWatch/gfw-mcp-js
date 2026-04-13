@@ -6,7 +6,7 @@ import {
   generateVesselProfileUrl,
 } from '../lib/map-url-generator.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
-import { EventsResponse } from '../lib/types.js';
+import { EventsResponse, REGION_DATASETS } from '../lib/types.js';
 
 const datasetsByType = {
   fishing: 'public-global-fishing-events:latest',
@@ -87,6 +87,18 @@ export function register(server: McpServer) {
           .describe(
             'Types of encounters to include. Only valid when eventType is "encounter". ALWAYS default to ["CARRIER-FISHING", "SUPPORT-FISHING"] unless the user explicitly requests other encounter types.',
           ),
+        regionType: z
+          .enum(['MPA', 'EEZ', 'RFMO'])
+          .optional()
+          .describe(
+            'Type of region to filter by: MPA (Marine Protected Area), EEZ (Exclusive Economic Zone), or RFMO (Regional Fisheries Management Organisation). Must be provided together with regionId.',
+          ),
+        regionId: z
+          .string()
+          .optional()
+          .describe(
+            'Canonical ID of the region (MPA, EEZ, or RFMO). Use the Region ID Lookup tool if you only have the name. Must be provided together with regionType.',
+          ),
       },
       outputSchema: {
         total: z.number(),
@@ -152,6 +164,8 @@ export function register(server: McpServer) {
       offset,
       confidence,
       encounterTypes,
+      regionType,
+      regionId,
     }) => {
       try {
         const maxResults = limit ?? 20;
@@ -165,6 +179,11 @@ export function register(server: McpServer) {
         if (encounterTypes !== undefined && eventType !== 'encounter') {
           return createErrorResponse(
             'The encounterTypes filter is only valid when eventType is "encounter".',
+          );
+        }
+        if ((regionType === undefined) !== (regionId === undefined)) {
+          return createErrorResponse(
+            'regionType and regionId must be provided together.',
           );
         }
         const dataset = datasetsByType[eventType];
@@ -185,6 +204,10 @@ export function register(server: McpServer) {
           sort: '-start',
         };
         if (vesselId) params['vessels[0]'] = vesselId;
+        if (regionType && regionId) {
+          params['region-ids[0]'] = regionId;
+          params['region-datasets[0]'] = REGION_DATASETS[regionType];
+        }
         if (eventType === 'port_visit') {
           const confidenceList = confidence ?? [4];
           confidenceList.forEach((v, i) => {
