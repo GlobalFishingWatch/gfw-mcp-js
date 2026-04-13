@@ -72,6 +72,21 @@ export function register(server: McpServer) {
           .describe(
             'Confidence levels to include for port visits. Each value must be 2, 3, or 4. Only valid when eventType is "port_visit". ALWAYS default to [4] unless the user explicitly requests other confidence levels.',
           ),
+        encounterTypes: z
+          .array(
+            z.enum([
+              'CARRIER-FISHING',
+              'CARRIER-BUNKER',
+              'FISHING-BUNKER',
+              'FISHING-FISHING',
+              'SUPPORT-FISHING',
+            ]),
+          )
+          .min(1)
+          .optional()
+          .describe(
+            'Types of encounters to include. Only valid when eventType is "encounter". ALWAYS default to ["CARRIER-FISHING", "SUPPORT-FISHING"] unless the user explicitly requests other encounter types.',
+          ),
       },
       outputSchema: {
         total: z.number(),
@@ -136,6 +151,7 @@ export function register(server: McpServer) {
       limit,
       offset,
       confidence,
+      encounterTypes,
     }) => {
       try {
         const maxResults = limit ?? 20;
@@ -144,6 +160,11 @@ export function register(server: McpServer) {
         if (confidence !== undefined && eventType !== 'port_visit') {
           return createErrorResponse(
             'The confidence filter is only valid when eventType is "port_visit".',
+          );
+        }
+        if (encounterTypes !== undefined && eventType !== 'encounter') {
+          return createErrorResponse(
+            'The encounterTypes filter is only valid when eventType is "encounter".',
           );
         }
         const dataset = datasetsByType[eventType];
@@ -168,6 +189,22 @@ export function register(server: McpServer) {
           const confidenceList = confidence ?? [4];
           confidenceList.forEach((v, i) => {
             params[`confidences[${i}]`] = String(v);
+          });
+        }
+        if (eventType === 'encounter') {
+          const encounterTypeList = encounterTypes ?? [
+            'CARRIER-FISHING',
+            'SUPPORT-FISHING',
+          ];
+          const expanded: string[] = [];
+          for (const v of encounterTypeList) {
+            expanded.push(v);
+            if (v !== 'FISHING-FISHING') {
+              expanded.push(v.split('-').reverse().join('-'));
+            }
+          }
+          [...new Set(expanded)].forEach((v, i) => {
+            params[`encounter-types[${i}]`] = v;
           });
         }
 
