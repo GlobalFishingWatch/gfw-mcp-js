@@ -15,14 +15,14 @@ export function register(server: McpServer) {
   server.registerTool(
     'region-id-lookup',
     {
-      title: 'Protected Region ID Lookup',
+      title: 'Region ID Lookup',
       description:
-        'Retrieve the canonical identifier (ID) for a Marine Protected Area (MPA) or Exclusive Economic Zone (EEZ) based on a human-readable name. When more than one match is returned, ask the user which region they meant before proceeding. Use this tool before requesting fishing hours to ensure you pass the correct region ID.',
+        'Retrieve the canonical identifier (ID) for a Marine Protected Area (MPA), Exclusive Economic Zone (EEZ), or Regional Fisheries Management Organisation (RFMO) based on a human-readable name. When more than one match is returned, ask the user which region they meant before proceeding. Use this tool before requesting fishing hours to ensure you pass the correct region ID.',
       inputSchema: {
         regionType: z
-          .enum(['MPA', 'EEZ'])
+          .enum(['MPA', 'EEZ', 'RFMO'])
           .describe(
-            'Type of region to search: MPA (Marine Protected Area) or EEZ (Exclusive Economic Zone)',
+            'Type of region to search: MPA (Marine Protected Area), EEZ (Exclusive Economic Zone), or RFMO (Regional Fisheries Management Organisation)',
           ),
         query: z
           .string()
@@ -40,7 +40,7 @@ export function register(server: McpServer) {
           ),
       },
       outputSchema: {
-        regionType: z.enum(['MPA', 'EEZ']),
+        regionType: z.enum(['MPA', 'EEZ', 'RFMO']),
         query: z.string(),
         limit: z.number(),
         matches: z.array(

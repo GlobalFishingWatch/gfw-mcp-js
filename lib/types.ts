@@ -3,6 +3,7 @@
 export const REGION_DATASETS = {
   MPA: 'public-mpa-all',
   EEZ: 'public-eez-areas',
+  RFMO: 'public-rfmo',
 } as const;
 
 export type RegionType = keyof typeof REGION_DATASETS;
