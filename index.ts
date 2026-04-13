@@ -1,8 +1,15 @@
+import * as Sentry from '@sentry/node';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import express from 'express';
 import { authenticate, API_KEY } from './middleware/auth.js';
 import { createServer } from './mcp-server.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+
+Sentry.init({
+  dsn: 'https://02861a39640f96d39216f83d54f233cd@o4510353401577472.ingest.us.sentry.io/4511211505057792',
+  environment: process.env.NODE_ENV || 'production',
+  sendDefaultPii: true,
+});
 
 const app = express();
 app.use(express.json());
@@ -48,5 +55,18 @@ async function main() {
 
 main().catch((error) => {
   console.error('Fatal error in main():', error);
-  process.exit(1);
+  Sentry.captureException(error);
+  Sentry.flush(2000).finally(() => process.exit(1));
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  Sentry.captureException(error);
+  Sentry.flush(2000).finally(() => process.exit(1));
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason);
+  Sentry.captureException(reason);
+  Sentry.flush(2000).finally(() => process.exit(1));
 });

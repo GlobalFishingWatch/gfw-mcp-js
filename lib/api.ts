@@ -19,6 +19,7 @@ export async function gfwFetch(
   const response = await fetch(url.toString(), {
     headers: {
       ...(apiKey && { Authorization: `Bearer ${apiKey}` }),
+      Referer: 'gfw-mcp-js',
     },
   });
 

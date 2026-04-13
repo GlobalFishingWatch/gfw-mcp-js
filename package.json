@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.22.0",
+    "@sentry/node": "^10.48.0",
     "axios": "^1.13.6",
     "express": "^5.1.0",
     "qs": "^6.15.1",

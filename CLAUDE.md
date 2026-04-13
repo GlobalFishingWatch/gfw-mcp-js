@@ -14,6 +14,7 @@ No build step required — `tsx` executes `index.ts` directly.
 
 - `PORT` — HTTP port (default: `4000`)
 - `API_KEY` — Optional Bearer token for authentication; if unset, auth is disabled
+- `NODE_ENV` — Environment name sent to Sentry (default: `development`)
 
 ## Architecture
 
