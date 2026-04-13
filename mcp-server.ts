@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import * as vesselEvents from './tools/vessel-events.js';
 import * as vesselSearch from './tools/vessel-search.js';
+import * as vesselById from './tools/vessel-by-id.js';
 import * as regionIdLookup from './tools/region-id-lookup.js';
 import * as regionGeometry from './tools/region-geometry.js';
 import * as mpaVesselReport from './tools/vessel-report.js';
@@ -13,6 +14,7 @@ export function createServer(): McpServer {
   vesselSearch.register(server);
   regionIdLookup.register(server);
   regionGeometry.register(server);
+  vesselById.register(server);
   mpaVesselReport.register(server);
 
   return server;
