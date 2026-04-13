@@ -17,7 +17,7 @@ export function register(server: McpServer) {
     {
       title: 'Activity Hours Calculator',
       description:
-        'Returns the number of activity hours for a given time period in a specific Marine Protected Area (MPA), Exclusive Economic Zone (EEZ), or Regional Fisheries Management Organisation (RFMO) identified by its canonical region ID. Use the Region ID Lookup tool first if you only know the human-readable name. Optionally filters by one or multiple vessel flag states. This tool calculates and reports the total fishing activity hours detected within the region boundaries during the specified date range. The tool also provides a link to the Global Fishing Watch (GFW) map where users can view the detailed data and navigate the fishing activity visually. IMPORTANT: This tool must NEVER be called in parallel. If multiple reports are needed, call this tool sequentially, one at a time, waiting for each result before making the next call.',
+        'Returns the number of activity hours for a given time period in a specific Marine Protected Area (MPA), Exclusive Economic Zone (EEZ), or Regional Fisheries Management Organisation (RFMO) identified by its canonical region ID. Use the Region ID Lookup tool first if you only know the human-readable name. Optionally filters by one or multiple vessel flag states. This tool calculates and reports the total fishing activity hours detected within the region boundaries during the specified date range. The tool also provides a link to the Global Fishing Watch (GFW) map where users can view the detailed data and navigate the fishing activity visually. IMPORTANT: This tool must NEVER be called in parallel. If multiple reports are needed, call this tool sequentially, one at a time, waiting for each result before making the next call. IMPORTANT: The gfwMapUrl returned by this tool must NEVER be truncated, shortened, or summarized — always display it in its entirety.',
       inputSchema: {
         regionType: z
           .enum(['MPA', 'EEZ', 'RFMO'])
@@ -124,8 +124,8 @@ export function register(server: McpServer) {
             'How to group the report results. ' +
               '"VESSEL_ID" (default): results grouped per individual vessel. ' +
               '"FLAG": results aggregated by flag state. ' +
-              '"GEARTYPE": results aggregated by gear type. ' +
-              '"FLAGANDGEARTYPE": results aggregated by flag state and gear type combined.',
+              '"GEARTYPE": results aggregated by gear type — only valid when type is "FISHING". ' +
+              '"FLAGANDGEARTYPE": results aggregated by flag state and gear type combined — only valid when type is "FISHING".',
           ),
       },
       outputSchema: {
@@ -158,7 +158,7 @@ export function register(server: McpServer) {
         gfwMapUrl: z
           .string()
           .describe(
-            'URL to the Global Fishing Watch map showing the detailed fishing activity data for the specified region and date range. IMPORTANT!! Always share this full link with the user when presenting reports. ',
+            'URL to the Global Fishing Watch map showing the detailed fishing activity data for the specified region and date range. IMPORTANT!! Always share this full link with the user when presenting reports. NEVER truncate, shorten, or summarize this URL — always display it in its entirety.',
           ),
         topVessels: z
           .array(
@@ -172,11 +172,15 @@ export function register(server: McpServer) {
             }),
           )
           .optional()
-          .describe('Top 10 vessels by hours. Only present when groupBy is "VESSEL_ID".'),
+          .describe(
+            'Top 10 vessels by hours. Only present when groupBy is "VESSEL_ID".',
+          ),
         rows: z
           .array(z.record(z.string().or(z.number())))
           .optional()
-          .describe('Aggregated rows sorted by hours descending. Present when groupBy is "FLAG", "GEARTYPE", or "FLAGANDGEARTYPE". Each row contains the grouping fields plus "hours".'),
+          .describe(
+            'Aggregated rows sorted by hours descending. Present when groupBy is "FLAG", "GEARTYPE", or "FLAGANDGEARTYPE". Each row contains the grouping fields plus "hours".',
+          ),
       },
     },
     async ({
@@ -200,6 +204,15 @@ export function register(server: McpServer) {
         if (end.getTime() - start.getTime() > msInYear) {
           return createErrorResponse(
             'The report date range cannot exceed 1 year. Please reduce the range between startDate and endDate.',
+          );
+        }
+
+        if (
+          activityType === 'PRESENCE' &&
+          (groupByValue === 'GEARTYPE' || groupByValue === 'FLAGANDGEARTYPE')
+        ) {
+          return createErrorResponse(
+            'groupBy "GEARTYPE" and "FLAGANDGEARTYPE" are only valid when type is "FISHING".',
           );
         }
 
@@ -289,7 +302,10 @@ export function register(server: McpServer) {
         const rows = (() => {
           if (groupByValue === 'VESSEL_ID') return undefined;
 
-          const aggregated = new Map<string, { key: Record<string, string | undefined>; hours: number }>();
+          const aggregated = new Map<
+            string,
+            { key: Record<string, string | undefined>; hours: number }
+          >();
           for (const row of allRows) {
             const key =
               groupByValue === 'FLAG'

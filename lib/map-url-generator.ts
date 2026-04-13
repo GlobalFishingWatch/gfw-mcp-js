@@ -93,3 +93,7 @@ export function generateVesselProfileUrl(
 
   return `${GFW_BASE_URL}${baseUrl}${dynamicPath}`;
 }
+
+export function generatePortReportUrl(portId: string): string {
+  return `${GFW_BASE_URL}/fishing-activity/default-public/ports-report/${portId}?portsReportDatasetId=public-global-port-visits-events:latest`;
+}

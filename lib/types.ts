@@ -68,6 +68,21 @@ export type EventEntry = {
     ssvid: string;
     flag: string;
   };
+  port_visit?: {
+    intermediateAnchorage?: {
+      name: string;
+      id: string;
+      flag: string;
+    };
+  };
+  encounter?: {
+    vessel: {
+      id: string;
+      name: string;
+      ssvid: string;
+      flag: string;
+    };
+  };
   regions: Record<string, string[]>;
 };
 

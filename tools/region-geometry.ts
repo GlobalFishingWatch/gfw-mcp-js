@@ -1,16 +1,17 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { gfwFetch } from '../lib/api.js';
-import { createErrorResponse, createToolResponse } from '../lib/response.js';
+import { createToolResponse } from '../lib/response.js';
 import { REGION_DATASETS } from '../lib/types.js';
+
+const GFW_BASE = 'https://gateway.api.globalfishingwatch.org';
 
 export function register(server: McpServer) {
   server.registerTool(
     'region-geometry',
     {
-      title: 'Region Geometry',
+      title: 'Region Geometry URL',
       description:
-        'Retrieve the GeoJSON geometry for a specific Marine Protected Area (MPA), Exclusive Economic Zone (EEZ), or Regional Fisheries Management Organisation (RFMO) by its canonical ID. Use region-id-lookup first to obtain the ID.',
+        'Returns the URL where the GeoJSON geometry of a specific Marine Protected Area (MPA), Exclusive Economic Zone (EEZ), or Regional Fisheries Management Organisation (RFMO) can be retrieved. Use region-id-lookup first to obtain the ID.',
       inputSchema: {
         regionType: z
           .enum(['MPA', 'EEZ', 'RFMO'])
@@ -22,22 +23,14 @@ export function register(server: McpServer) {
       outputSchema: {
         regionType: z.enum(['MPA', 'EEZ', 'RFMO']),
         id: z.string(),
-        geometry: z.record(z.unknown()).describe('GeoJSON geometry object'),
+        url: z.string().describe('URL to fetch the GeoJSON geometry of the region'),
       },
     },
     async ({ regionType, id }) => {
-      try {
-        const dataset = REGION_DATASETS[regionType];
-        const response = await gfwFetch(`/v3/datasets/${dataset}/context-layers/${id}`);
-        const geometry = await response.json();
-
-        const output = { regionType, id, geometry };
-        return createToolResponse(JSON.stringify(output, null, 2), output);
-      } catch (err) {
-        return createErrorResponse(
-          `Failed to retrieve region geometry: ${err instanceof Error ? err.message : String(err)}`,
-        );
-      }
+      const dataset = REGION_DATASETS[regionType];
+      const url = `${GFW_BASE}/v3/datasets/${dataset}/context-layers/${id}`;
+      const output: Record<string, unknown> = { regionType, id, url };
+      return createToolResponse(JSON.stringify(output, null, 2), output);
     },
   );
 }

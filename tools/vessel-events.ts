@@ -1,7 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
-import { generateVesselProfileUrl } from '../lib/map-url-generator.js';
+import {
+  generatePortReportUrl,
+  generateVesselProfileUrl,
+} from '../lib/map-url-generator.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
 import { EventsResponse } from '../lib/types.js';
 
@@ -9,7 +12,7 @@ const datasetsByType = {
   fishing: 'public-global-fishing-events:latest',
   encounter: 'public-global-encounters-events:latest',
   port_visit: 'public-global-port-visits-events:latest',
-  loitering: 'public-global-loitering:latest',
+  loitering: 'public-global-loitering-events:latest',
 };
 
 export function register(server: McpServer) {
@@ -18,7 +21,7 @@ export function register(server: McpServer) {
     {
       title: 'Vessel Events Lookup',
       description:
-        "Retrieve fishing events from the Global Fishing Watch API. Filter by event type, date range, vessel ID, and region. Results include event metadata, positions, and vessel info. Each entry includes a mapUrl linking to the vessel's profile on the Global Fishing Watch map — share this URL with the user when presenting results.",
+        "Retrieve fishing events from the Global Fishing Watch API. Filter by event type, date range, vessel ID, and region. Results include event metadata, positions, vessel info, and the region IDs (EEZ, MPA, RFMO, FAO) where each event intersects. Use the regions fields in each entry to filter or group events by region — for example, to find all events inside a specific EEZ, MPA, RFMO, or FAO area. Each entry also includes a mapUrl linking to the vessel's profile on the Global Fishing Watch map — share this URL with the user when presenting results.",
       inputSchema: {
         eventType: z
           .enum(['fishing', 'encounter', 'port_visit', 'loitering'])
@@ -29,7 +32,6 @@ export function register(server: McpServer) {
             /^\d{4}-\d{2}-\d{2}$/,
             'Use ISO 8601 date format YYYY-MM-DD for startDate.',
           )
-          .optional()
           .describe(
             'Only include events on/after this date. If omitted, defaults to one month ago.',
           ),
@@ -39,7 +41,6 @@ export function register(server: McpServer) {
             /^\d{4}-\d{2}-\d{2}$/,
             'Use ISO 8601 date format YYYY-MM-DD for endDate. IMPORTANT! this date is exclusive.',
           )
-          .optional()
           .describe(
             'Only include events on/before this date. If omitted, defaults to today.',
           ),
@@ -64,6 +65,13 @@ export function register(server: McpServer) {
           .min(0)
           .optional()
           .describe('Pagination offset (default 0).'),
+        confidence: z
+          .array(z.number().int().min(2).max(4))
+          .min(1)
+          .optional()
+          .describe(
+            'Confidence levels to include for port visits. Each value must be 2, 3, or 4. Only valid when eventType is "port_visit". ALWAYS default to [4] unless the user explicitly requests other confidence levels.',
+          ),
       },
       outputSchema: {
         total: z.number(),
@@ -81,6 +89,35 @@ export function register(server: McpServer) {
             vesselId: z.string().nullish(),
             vesselName: z.string().nullish(),
             vesselFlag: z.string().nullish(),
+            regions: z
+              .object({
+                mpa: z.array(z.string()),
+                eez: z.array(z.string()),
+                rfmo: z.array(z.string()),
+                fao: z.array(z.string()),
+              })
+              .describe(
+                'Region IDs where the event intersects, grouped by region type. Use these fields to filter or group events by region — for example, to find all events inside a specific EEZ, MPA, RFMO, or FAO area, match against the corresponding array.',
+              ),
+            port: z
+              .object({
+                name: z.string().nullish(),
+                id: z.string().nullish(),
+                flag: z.string().nullish(),
+              })
+              .optional()
+              .describe('Port details. Only present for port_visit events.'),
+            encounteredVessel: z
+              .object({
+                name: z.string().nullish(),
+                id: z.string().nullish(),
+                flag: z.string().nullish(),
+                ssvid: z.string().nullish(),
+              })
+              .optional()
+              .describe(
+                'The other vessel involved in the encounter. Only present for encounter events.',
+              ),
           }),
         ),
         mapUrl: z
@@ -91,10 +128,24 @@ export function register(server: McpServer) {
           ),
       },
     },
-    async ({ eventType, startDate, endDate, vesselId, limit, offset }) => {
+    async ({
+      eventType,
+      startDate,
+      endDate,
+      vesselId,
+      limit,
+      offset,
+      confidence,
+    }) => {
       try {
         const maxResults = limit ?? 20;
         const pageOffset = offset ?? 0;
+
+        if (confidence !== undefined && eventType !== 'port_visit') {
+          return createErrorResponse(
+            'The confidence filter is only valid when eventType is "port_visit".',
+          );
+        }
         const dataset = datasetsByType[eventType];
 
         const startIso = startDate
@@ -113,21 +164,49 @@ export function register(server: McpServer) {
           sort: '-start',
         };
         if (vesselId) params['vessels[0]'] = vesselId;
+        if (eventType === 'port_visit') {
+          const confidenceList = confidence ?? [4];
+          confidenceList.forEach((v, i) => {
+            params[`confidences[${i}]`] = String(v);
+          });
+        }
 
         const response = await gfwFetch('/v3/events', params);
         const data: EventsResponse = await response.json();
 
-        const entries = data.entries.map((e) => ({
-          id: e.id,
-          type: e.type,
-          start: e.start,
-          end: e.end,
-          lat: e.position.lat,
-          lon: e.position.lon,
-          vesselId: e.vessel.id,
-          vesselName: e.vessel.name,
-          vesselFlag: e.vessel.flag,
-        }));
+        const entries = data.entries.map((e) => {
+          const extrafields: any = {};
+          if (eventType === 'port_visit') {
+            extrafields['port'] = {
+              name: e.port_visit?.intermediateAnchorage?.name ?? null,
+              id: e.port_visit?.intermediateAnchorage?.id ?? null,
+              flag: e.port_visit?.intermediateAnchorage?.flag ?? null,
+            };
+          } else if (eventType === 'encounter') {
+            extrafields['encounteredVessel'] = {
+              name: e.encounter?.vessel?.name ?? null,
+              id: e.encounter?.vessel?.id ?? null,
+              flag: e.encounter?.vessel?.flag ?? null,
+              ssvid: e.encounter?.vessel?.ssvid ?? null,
+            };
+          }
+          return {
+            id: e.id,
+            type: e.type,
+            start: e.start,
+            end: e.end,
+            lat: e.position.lat,
+            lon: e.position.lon,
+            vesselId: e.vessel.id,
+            regions: {
+              mpa: e.regions.mpa ?? [],
+              eez: e.regions.eez ?? [],
+              rfmo: e.regions.rfmo ?? [],
+              fao: e.regions.fao ?? [],
+            },
+            ...extrafields,
+          };
+        });
 
         const mapUrl =
           vesselId && startDate && endDate
