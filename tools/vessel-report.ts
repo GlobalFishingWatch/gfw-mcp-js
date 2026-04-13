@@ -13,21 +13,21 @@ import {
 
 export function register(server: McpServer) {
   server.registerTool(
-    'mpa-vessel-report',
+    'vessel-report',
     {
       title: 'Activity Hours Calculator',
       description:
-        'Returns the number of activity hours for a given time period in a specific Marine Protected Area (MPA) or Exclusive Economic Zone (EEZ) identified by its canonical region ID. Use the Protected Region ID Lookup tool first if you only know the human-readable name. Optionally filters by one or multiple vessel flag states. This tool calculates and reports the total fishing activity hours detected within the region boundaries during the specified date range. The tool also provides a link to the Global Fishing Watch (GFW) map where users can view the detailed data and navigate the fishing activity visually.',
+        'Returns the number of activity hours for a given time period in a specific Marine Protected Area (MPA), Exclusive Economic Zone (EEZ), or Regional Fisheries Management Organisation (RFMO) identified by its canonical region ID. Use the Region ID Lookup tool first if you only know the human-readable name. Optionally filters by one or multiple vessel flag states. This tool calculates and reports the total fishing activity hours detected within the region boundaries during the specified date range. The tool also provides a link to the Global Fishing Watch (GFW) map where users can view the detailed data and navigate the fishing activity visually. IMPORTANT: This tool must NEVER be called in parallel. If multiple reports are needed, call this tool sequentially, one at a time, waiting for each result before making the next call.',
       inputSchema: {
         regionType: z
-          .enum(['MPA', 'EEZ'])
+          .enum(['MPA', 'EEZ', 'RFMO'])
           .describe(
-            'Type of region to analyze: MPA (Marine Protected Area) or EEZ (Exclusive Economic Zone)',
+            'Type of region to analyze: MPA (Marine Protected Area), EEZ (Exclusive Economic Zone), or RFMO (Regional Fisheries Management Organisation)',
           ),
         regionId: z
           .string()
           .describe(
-            'Canonical ID of the Marine Protected Area (MPA) or Exclusive Economic Zone (EEZ). Use the Region ID Lookup tool if you only have the name.',
+            'Canonical ID of the region (MPA, EEZ, or RFMO). Use the Region ID Lookup tool if you only have the name.',
           ),
         startDate: z
           .string()
@@ -119,7 +119,7 @@ export function register(server: McpServer) {
           ),
       },
       outputSchema: {
-        regionType: z.enum(['MPA', 'EEZ']),
+        regionType: z.enum(['MPA', 'EEZ', 'RFMO']),
         regionId: z.string(),
         dateRange: z.object({ start: z.string(), end: z.string() }),
         fishingHours: z
