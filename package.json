@@ -1,6 +1,6 @@
 {
   "name": "@globalfishingwatch/mcp",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "MCP server for Global Fishing Watch data — vessel search, events, fishing hours, and region lookups",
   "author": "Global Fishing Watch",
   "license": "Apache-2.0",

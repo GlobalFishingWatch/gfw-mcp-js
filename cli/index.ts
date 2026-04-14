@@ -13,8 +13,12 @@ function print(data: unknown) {
   console.log(JSON.stringify(data, null, 2));
 }
 
-function fail(message: string): never {
-  console.error(`Error: ${message}`);
+function fail(message: string, stdout = 'error'): never {
+  if (stdout === 'error') {
+    console.error(`Error: ${message}`);
+  } else {
+    console.log(`Error: ${message}`);
+  }
   process.exit(1);
 }
 
@@ -30,35 +34,45 @@ async function run<T>(fn: () => Promise<T>) {
     // Inject token into env so gfwFetch picks it up
     process.env.API_KEY = resolveToken();
     const result = await fn();
-    if (result && typeof result === 'object' && 'isError' in result && (result as any).isError) {
+    if (
+      result &&
+      typeof result === 'object' &&
+      'isError' in result &&
+      (result as any).isError
+    ) {
       const message = (result as any).content?.[0]?.text ?? 'Unknown error';
       fail(isAuthError(message) ? message + TOKEN_HINT : message);
     }
     print(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    fail(isAuthError(message) ? message + TOKEN_HINT : message);
+    fail(
+      isAuthError(message) ? message + TOKEN_HINT : message,
+      isAuthError(message) ? 'log' : 'error',
+    );
   }
 }
 
 const program = new Command();
 
-program
-  .name('gfw')
-  .description('Global Fishing Watch CLI')
-  .version('1.0.0');
+program.name('gfw').description('Global Fishing Watch CLI').version('1.0.0');
 
 // ── auth ──────────────────────────────────────────────────────────────────────
 const auth = program.command('auth').description('Manage GFW API credentials');
 
 auth.command('login').description('Save a GFW API token').action(authLogin);
 auth.command('logout').description('Remove stored token').action(authLogout);
-auth.command('status').description('Show current token source').action(authStatus);
+auth
+  .command('status')
+  .description('Show current token source')
+  .action(authStatus);
 
 // ── vessel-search ─────────────────────────────────────────────────────────────
 program
   .command('vessel-search')
-  .description('Search vessels by name, MMSI, IMO, callsign, flag, or date range')
+  .description(
+    'Search vessels by name, MMSI, IMO, callsign, flag, or date range',
+  )
   .option('--name <name>', 'Vessel name or partial name')
   .option('--mmsi <mmsi>', '9-digit MMSI')
   .option('--imo <imo>', '7-digit IMO number')
@@ -93,13 +107,21 @@ program
 program
   .command('vessel-events')
   .description('Retrieve fishing, encounter, port visit, or loitering events')
-  .requiredOption('--event-type <type>', 'Event type: fishing | encounter | port_visit | loitering')
+  .requiredOption(
+    '--event-type <type>',
+    'Event type: fishing | encounter | port_visit | loitering',
+  )
   .requiredOption('--start-date <date>', 'Start date YYYY-MM-DD')
   .requiredOption('--end-date <date>', 'End date YYYY-MM-DD')
   .option('--vessel-id <id>', 'Filter by vessel ID')
   .option('--limit <n>', 'Max results (default 20, max 100)', parseInt)
   .option('--offset <n>', 'Pagination offset', parseInt)
-  .option('--confidence <levels...>', 'Confidence levels 2-4 (port_visit only)', (v, acc: number[]) => [...acc, parseInt(v)], [] as number[])
+  .option(
+    '--confidence <levels...>',
+    'Confidence levels 2-4 (port_visit only)',
+    (v, acc: number[]) => [...acc, parseInt(v)],
+    [] as number[],
+  )
   .option('--encounter-types <types...>', 'Encounter types (encounter only)')
   .option('--region-type <type>', 'Region type: MPA | EEZ | RFMO')
   .option('--region-id <id>', 'Region canonical ID')
@@ -113,7 +135,9 @@ program
         limit: opts.limit,
         offset: opts.offset,
         confidence: opts.confidence?.length ? opts.confidence : undefined,
-        encounterTypes: opts.encounterTypes?.length ? opts.encounterTypes : undefined,
+        encounterTypes: opts.encounterTypes?.length
+          ? opts.encounterTypes
+          : undefined,
         regionType: opts.regionType as any,
         regionId: opts.regionId,
       }),
@@ -124,7 +148,10 @@ program
 program
   .command('events-stats')
   .description('Compute aggregate event statistics')
-  .requiredOption('--event-type <type>', 'Event type: fishing | encounter | port_visit | loitering')
+  .requiredOption(
+    '--event-type <type>',
+    'Event type: fishing | encounter | port_visit | loitering',
+  )
   .requiredOption('--start-date <date>', 'Start date YYYY-MM-DD')
   .requiredOption('--end-date <date>', 'End date YYYY-MM-DD')
   .option('--confidence <levels...>', 'Confidence levels (port_visit only)')
@@ -138,8 +165,12 @@ program
         eventType: opts.eventType as any,
         startDate: opts.startDate,
         endDate: opts.endDate,
-        confidence: opts.confidence?.length ? opts.confidence.map(Number) : undefined,
-        encounterTypes: opts.encounterTypes?.length ? opts.encounterTypes : undefined,
+        confidence: opts.confidence?.length
+          ? opts.confidence.map(Number)
+          : undefined,
+        encounterTypes: opts.encounterTypes?.length
+          ? opts.encounterTypes
+          : undefined,
         regionType: opts.regionType as any,
         regionId: opts.regionId,
         groupBy: opts.groupBy as any,
@@ -182,13 +213,19 @@ program
   .requiredOption('--region-type <type>', 'Region type: MPA | EEZ | RFMO')
   .requiredOption('--region-id <id>', 'Canonical region ID')
   .requiredOption('--start-date <date>', 'Start date YYYY-MM-DD')
-  .requiredOption('--end-date <date>', 'End date YYYY-MM-DD (exclusive, max 1 year range)')
+  .requiredOption(
+    '--end-date <date>',
+    'End date YYYY-MM-DD (exclusive, max 1 year range)',
+  )
   .option('--type <type>', 'Activity type: FISHING (default) | PRESENCE')
   .option('--flags <flags...>', 'Flag state ISO 3166-1 alpha-3 codes')
   .option('--vessel-types <types...>', 'Vessel types (PRESENCE only)')
   .option('--speeds <speeds...>', 'Speed ranges (PRESENCE only)')
   .option('--geartypes <geartypes...>', 'Gear types (FISHING only)')
-  .option('--group-by <dim>', 'Group by: VESSEL_ID | FLAG | GEARTYPE | FLAGANDGEARTYPE')
+  .option(
+    '--group-by <dim>',
+    'Group by: VESSEL_ID | FLAG | GEARTYPE | FLAGANDGEARTYPE',
+  )
   .action((opts) =>
     run(() =>
       vesselReport({

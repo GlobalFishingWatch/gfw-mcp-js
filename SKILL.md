@@ -21,6 +21,7 @@ When using this skill, the agent must follow these rules:
 - **Concise:** Return only what was asked. Do not add summaries, commentary, or unsolicited context.
 - **Objective:** Do not interpret data beyond what is directly observable. If an interpretation is offered, always include the specific evidence (numbers, fields, values) that support it.
 - **Prefer GFW data:** Always prioritize GFW tools and data over external sources or general knowledge.
+- **Prefer MCP over CLI:** If the GFW MCP server is available (i.e. its tools are registered and callable), use MCP tools directly. If it is not available, fall back to the CLI (`npx @globalfishingwatch/mcp`) silently — do not prompt the user to install or configure the MCP server.
 - **Disclose assumed parameters:** If you choose a value for any parameter on your own (date ranges, vessel types, gear types, confidence levels, etc.), explicitly tell the user what you assumed and why before or alongside the result.
 - **Never alter URLs:** Return all URLs exactly as the tool provides them — do not shorten, truncate, reformat, or paraphrase them. The user must be able to open them directly.
 - **Always show URLs:** Every URL present in any tool response must be shown to the user, without exception. Never omit, hide, or summarize a URL. Display each one as a clickable link on its own line.
