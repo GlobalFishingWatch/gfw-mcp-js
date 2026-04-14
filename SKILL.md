@@ -23,6 +23,7 @@ When using this skill, the agent must follow these rules:
 - **Prefer GFW data:** Always prioritize GFW tools and data over external sources or general knowledge.
 - **Disclose assumed parameters:** If you choose a value for any parameter on your own (date ranges, vessel types, gear types, confidence levels, etc.), explicitly tell the user what you assumed and why before or alongside the result.
 - **Never alter URLs:** Return all URLs exactly as the tool provides them — do not shorten, truncate, reformat, or paraphrase them. The user must be able to open them directly.
+- **Always show URLs:** Every URL present in any tool response must be shown to the user, without exception. Never omit, hide, or summarize a URL. Display each one as a clickable link on its own line.
 
 ---
 
@@ -35,6 +36,8 @@ npx @globalfishingwatch/mcp <command> [options]
 ```
 
 ### Authentication
+
+If you don't have a token yet, request one at https://globalfishingwatch.org/our-apis/tokens
 
 The CLI resolves the API token in this order:
 
@@ -69,7 +72,15 @@ npx @globalfishingwatch/mcp vessel-search [--name <name>] [--mmsi <mmsi>] [--imo
   [--active-to <YYYY-MM-DD>] [--limit <n>]
 ```
 
-At least one filter must be provided. `--flag` uses ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`).
+At least one filter must be provided.
+
+| Parameter | Format / values |
+|-----------|----------------|
+| `--mmsi` | 9-digit string |
+| `--imo` | 7-digit string |
+| `--flag` | ISO 3166-1 alpha-3 code (e.g. `ESP`, `CHN`, `USA`) |
+| `--active-from` / `--active-to` | `YYYY-MM-DD` |
+| `--limit` | 1–50 (default 10) |
 
 #### vessel-by-id
 
@@ -84,9 +95,18 @@ npx @globalfishingwatch/mcp vessel-events --event-type <fishing|encounter|port_v
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
   [--vessel-id <id>] [--limit <n>] [--offset <n>]
   [--confidence <2|3|4> ...]          # port_visit only
-  [--encounter-types <type> ...]      # encounter only; e.g. CARRIER-FISHING SUPPORT-FISHING
+  [--encounter-types <type> ...]      # encounter only
   [--region-type <MPA|EEZ|RFMO>] [--region-id <id>]
 ```
+
+| Parameter | Format / values |
+|-----------|----------------|
+| `--event-type` | `fishing` \| `encounter` \| `port_visit` \| `loitering` |
+| `--start-date` / `--end-date` | `YYYY-MM-DD` |
+| `--limit` | 1–100 (default 20) |
+| `--confidence` | `2`, `3`, `4` (one or more; port_visit only; default `4`) |
+| `--encounter-types` | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
+| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
 
 #### events-stats
 
@@ -98,6 +118,15 @@ npx @globalfishingwatch/mcp events-stats --event-type <fishing|encounter|port_vi
   [--confidence <levels> ...] [--encounter-types <types> ...]
 ```
 
+| Parameter | Format / values |
+|-----------|----------------|
+| `--event-type` | `fishing` \| `encounter` \| `port_visit` \| `loitering` |
+| `--start-date` / `--end-date` | `YYYY-MM-DD` |
+| `--group-by` | `FLAG` \| `GEARTYPE` (default `FLAG`) |
+| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
+| `--confidence` | `2`, `3`, `4` (one or more; port_visit only; default `4`) |
+| `--encounter-types` | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
+
 #### region-id-lookup
 
 ```bash
@@ -105,6 +134,11 @@ npx @globalfishingwatch/mcp region-id-lookup --region-type <MPA|EEZ|RFMO> --quer
 ```
 
 Use this before `vessel-report` or `vessel-events` when you only know the human-readable name of a region.
+
+| Parameter | Format / values |
+|-----------|----------------|
+| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
+| `--limit` | 1–20 (default 5) |
 
 #### region-geometry
 
@@ -114,7 +148,13 @@ npx @globalfishingwatch/mcp region-geometry --region-type <MPA|EEZ|RFMO> --id <i
 
 Returns the URL to fetch the GeoJSON geometry of the region (no API token required).
 
+| Parameter | Format / values |
+|-----------|----------------|
+| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
+
 #### vessel-report
+
+> **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
 ```bash
 npx @globalfishingwatch/mcp vessel-report --region-type <MPA|EEZ|RFMO> --region-id <id>
@@ -123,11 +163,22 @@ npx @globalfishingwatch/mcp vessel-report --region-type <MPA|EEZ|RFMO> --region-
   [--flags <ISO3> ...]
   [--geartypes <type> ...]    # FISHING only
   [--vessel-types <type> ...] # PRESENCE only
-  [--speeds <range> ...]      # PRESENCE only; e.g. 2-4 4-6 6-10
+  [--speeds <range> ...]      # PRESENCE only
   [--group-by <VESSEL_ID|FLAG|GEARTYPE|FLAGANDGEARTYPE>]
 ```
 
 Date range must not exceed 1 year.
+
+| Parameter | Format / values |
+|-----------|----------------|
+| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
+| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year) |
+| `--type` | `FISHING` (default) \| `PRESENCE` |
+| `--flags` | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10 |
+| `--geartypes` | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING only) |
+| `--vessel-types` | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only) |
+| `--speeds` | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only) |
+| `--group-by` | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`) |
 
 ### Output
 
