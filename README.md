@@ -1,175 +1,309 @@
-# GFW MCP Server
+# gfw-mcp-js
 
-An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that exposes [Global Fishing Watch](https://globalfishingwatch.org) data to AI assistants. Enables querying fishing vessel information, detecting fishing events, and analyzing fishing activity within Marine Protected Areas (MPAs) and Exclusive Economic Zones (EEZs).
+Access [Global Fishing Watch](https://globalfishingwatch.org) data from any MCP-compatible AI assistant or directly from the terminal. Search vessels, retrieve fishing and port-visit events, look up Marine Protected Areas, Exclusive Economic Zones and RFMOs, calculate fishing activity hours within any region, and compute aggregate event statistics.
 
 ## Requirements
 
 - Node.js 18+
 - A [GFW API key](https://globalfishingwatch.org/our-apis/)
 
-## Setup
+---
+
+## MCP Server
+
+### Quick start (no install)
 
 ```bash
-npm install
-npm run build
+npx gfw-mcp-js mcp
 ```
 
-Create a `.env` file (or export env vars):
+Set your API key via the `GFW_TOKEN` environment variable (or `API_KEY` for compatibility).
 
-```env
-API_KEY=your_gfw_api_key_here
-```
+### Client configuration
 
-## Available Tools
+#### Claude Desktop
 
-| Tool                | Description                                                               |
-| ------------------- | ------------------------------------------------------------------------- |
-| `vessel-search`     | Search vessels by name, MMSI, IMO, callsign, flag, or gear type           |
-| `vessel-events`     | Retrieve fishing, encounter, port visit, or loitering events for a vessel |
-| `region-id-lookup`  | Resolve MPA or EEZ names to canonical region IDs                          |
-| `mpa-vessel-report` | Calculate fishing/presence hours in a region with top vessel breakdown    |
-
-## Integration
-
-The server runs over **stdio**, which is the standard transport for local MCP integrations.
-
-### Claude Desktop
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
+`%APPDATA%\Claude\claude_desktop_config.json` (Windows)
 
 ```json
 {
   "mcpServers": {
     "gfw": {
-      "command": "node",
-      "args": ["/absolute/path/to/poc-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "gfw-mcp-js", "mcp"],
       "env": {
-        "API_KEY": "your_gfw_api_key_here"
+        "GFW_TOKEN": "your_gfw_api_key_here"
       }
     }
   }
 }
 ```
 
-Restart Claude Desktop. The tools will appear automatically in the conversation.
-
-### Claude Code (CLI)
-
-Add the server to your Claude Code config:
+#### Claude Code
 
 ```bash
-claude mcp add gfw -- node /absolute/path/to/poc-mcp/dist/index.js
+claude mcp add gfw -- npx -y gfw-mcp-js mcp
+export GFW_TOKEN=your_gfw_api_key_here
 ```
 
-Then set the API key in your environment or in the MCP config:
+#### Cursor
 
-```bash
-export API_KEY=your_gfw_api_key_here
-```
-
-Or configure it directly in `.claude/mcp_settings.json`:
+`.cursor/mcp.json`
 
 ```json
 {
   "mcpServers": {
     "gfw": {
-      "command": "node",
-      "args": ["/absolute/path/to/poc-mcp/dist/index.js"],
-      "env": {
-        "API_KEY": "your_gfw_api_key_here"
-      }
+      "command": "npx",
+      "args": ["-y", "gfw-mcp-js", "mcp"],
+      "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
     }
   }
 }
 ```
 
-### Cursor
+#### Windsurf
 
-Add to `.cursor/mcp.json` in your project root (or `~/.cursor/mcp.json` globally):
+`~/.codeium/windsurf/mcp_config.json`
 
 ```json
 {
   "mcpServers": {
     "gfw": {
-      "command": "node",
-      "args": ["/absolute/path/to/poc-mcp/dist/index.js"],
-      "env": {
-        "API_KEY": "your_gfw_api_key_here"
-      }
+      "command": "npx",
+      "args": ["-y", "gfw-mcp-js", "mcp"],
+      "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
     }
   }
 }
 ```
 
-### Windsurf
+#### VS Code (Copilot)
 
-Add to `~/.codeium/windsurf/mcp_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "gfw": {
-      "command": "node",
-      "args": ["/absolute/path/to/poc-mcp/dist/index.js"],
-      "env": {
-        "API_KEY": "your_gfw_api_key_here"
-      }
-    }
-  }
-}
-```
-
-### VS Code (Copilot)
-
-Add to `.vscode/mcp.json` in your workspace:
+`.vscode/mcp.json`
 
 ```json
 {
   "servers": {
     "gfw": {
       "type": "stdio",
-      "command": "node",
-      "args": ["/absolute/path/to/poc-mcp/dist/index.js"],
-      "env": {
-        "API_KEY": "your_gfw_api_key_here"
+      "command": "npx",
+      "args": ["-y", "gfw-mcp-js", "mcp"],
+      "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
+    }
+  }
+}
+```
+
+#### OpenClaw
+
+`~/.openclaw/openclaw.json`
+
+```json
+{
+  "tools": {
+    "mcp": {
+      "servers": {
+        "gfw": {
+          "command": "npx",
+          "args": ["-y", "gfw-mcp-js", "mcp"],
+          "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
+        }
       }
     }
   }
 }
 ```
 
-### HTTP Transport (optional)
+#### Gemini CLI
 
-The server also includes a commented-out `StreamableHTTPServerTransport` in [index.ts](index.ts). To enable it, uncomment the relevant block and set the `PORT` env var (default: `4000`). The endpoint will be available at `POST http://localhost:4000/mcp`.
+`~/.gemini/settings.json` (global) or `.gemini/settings.json` (per project)
 
-This is useful for integrations that require a remote/hosted MCP server or for clients that do not support stdio.
+```json
+{
+  "mcpServers": {
+    "gfw": {
+      "command": "npx",
+      "args": ["-y", "gfw-mcp-js", "mcp"],
+      "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
+    }
+  }
+}
+```
 
-## Environment Variables
+### Alternative: local clone
 
-| Variable      | Default | Description                                   |
-| ------------- | ------- | --------------------------------------------- |
-| `API_KEY` | —      | GFW API bearer token (required for real data)     |
-| `PORT`    | `4000` | HTTP port (only used with HTTP transport)          |
+```bash
+git clone https://github.com/globalfishingwatch/gfw-mcp
+cd gfw-mcp
+npm install && npm run build
+```
 
-## Example Prompts
+Then replace `npx -y gfw-mcp-js` with `node /absolute/path/to/gfw-mcp/dist/bin.js` in any config above.
 
-Once connected, you can ask the AI assistant things like:
+---
 
-- _"How many fishing hours were recorded inside the Galápagos Marine Reserve in 2023?"_
-- _"Search for vessels named 'Atlantic Star' flagged to Spain"_
-- _"What fishing events has vessel ID xyz had in the last 30 days?"_
-- _"Find the region ID for the Great Barrier Reef MPA"_
-- _"Show me vessel presence hours in the North Sea EEZ for Chinese-flagged cargo vessels in 2024"_
+## CLI
 
-## Project Structure
+### Install
+
+```bash
+# Run without installing
+npx gfw-mcp-js --help
+
+# Or install globally
+npm install -g gfw-mcp-js
+gfw-mcp-js --help
+```
+
+### Authentication
+
+Token resolution order:
+
+1. `GFW_TOKEN` environment variable
+2. `API_KEY` environment variable (compatibility alias)
+3. `~/.gfw/config.json` (saved via `auth login`)
+
+```bash
+# Save token interactively (stored in ~/.gfw/config.json)
+npx gfw-mcp-js auth login
+
+# Check which token source is active
+npx gfw-mcp-js auth status
+
+# Remove stored token
+npx gfw-mcp-js auth logout
+```
+
+Or pass the token inline for a single command:
+
+```bash
+GFW_TOKEN=your_key npx gfw-mcp-js vessel-search --name "Maria"
+```
+
+### Commands
+
+#### `vessel-search`
+
+Search vessels by name, MMSI, IMO, callsign, flag, or activity date range.
+
+```bash
+npx gfw-mcp-js vessel-search --name "Maria" --flag CHN
+npx gfw-mcp-js vessel-search --mmsi 123456789
+npx gfw-mcp-js vessel-search --flag ESP --active-from 2024-01-01 --active-to 2024-12-31 --limit 20
+```
+
+#### `vessel-by-id`
+
+Fetch full vessel profile(s) by GFW vessel ID.
+
+```bash
+npx gfw-mcp-js vessel-by-id --ids abc123
+npx gfw-mcp-js vessel-by-id --ids abc123 def456 ghi789
+```
+
+#### `vessel-events`
+
+Retrieve fishing, encounter, port visit, or loitering events.
+
+```bash
+npx gfw-mcp-js vessel-events --event-type fishing --start-date 2024-01-01 --end-date 2024-06-01
+npx gfw-mcp-js vessel-events --event-type port_visit --vessel-id abc123 --start-date 2024-01-01 --end-date 2024-12-31
+npx gfw-mcp-js vessel-events --event-type encounter --start-date 2024-01-01 --end-date 2024-12-31 --encounter-types CARRIER-FISHING SUPPORT-FISHING
+npx gfw-mcp-js vessel-events --event-type fishing --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-06-01
+```
+
+#### `events-stats`
+
+Compute aggregate event statistics over a date range.
+
+```bash
+npx gfw-mcp-js events-stats --event-type fishing --start-date 2024-01-01 --end-date 2024-12-31
+npx gfw-mcp-js events-stats --event-type fishing --start-date 2024-01-01 --end-date 2024-12-31 --group-by GEARTYPE
+npx gfw-mcp-js events-stats --event-type encounter --start-date 2024-01-01 --end-date 2024-12-31 --region-type RFMO --region-id WCPFC
+```
+
+#### `region-id-lookup`
+
+Resolve an MPA, EEZ, or RFMO name to its canonical ID.
+
+```bash
+npx gfw-mcp-js region-id-lookup --region-type MPA --query "Galapagos"
+npx gfw-mcp-js region-id-lookup --region-type EEZ --query "Patagonia" --limit 10
+npx gfw-mcp-js region-id-lookup --region-type RFMO --query "WCPFC"
+```
+
+#### `region-geometry`
+
+Get the GeoJSON URL for a specific region.
+
+```bash
+npx gfw-mcp-js region-geometry --region-type EEZ --id 8386
+npx gfw-mcp-js region-geometry --region-type MPA --id 12345
+```
+
+#### `vessel-report`
+
+Calculate fishing or presence hours inside a region.
+
+```bash
+npx gfw-mcp-js vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31
+npx gfw-mcp-js vessel-report --region-type MPA --region-id 12345 --start-date 2024-01-01 --end-date 2024-12-31 --flags CHN ESP
+npx gfw-mcp-js vessel-report --region-type RFMO --region-id WCPFC --start-date 2024-01-01 --end-date 2024-12-31 --type FISHING --group-by FLAG
+npx gfw-mcp-js vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE --vessel-types fishing cargo
+```
+
+### Output
+
+All commands output JSON to stdout, ready to pipe to `jq`:
+
+```bash
+npx gfw-mcp-js vessel-search --name "Maria" | jq '.results[].name'
+npx gfw-mcp-js vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 | jq '.fishingHours'
+```
+
+---
+
+## Available tools
+
+| Tool | Description |
+|------|-------------|
+| `vessel-search` | Search vessels by name, MMSI, IMO, callsign, flag, or gear type |
+| `vessel-by-id` | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata and a map URL |
+| `vessel-events` | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type |
+| `events-stats` | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type |
+| `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs |
+| `region-geometry` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO |
+| `vessel-report` | Calculate fishing or presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
+
+---
+
+## Environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GFW_TOKEN` | — | GFW API bearer token |
+| `API_KEY` | — | Alias for `GFW_TOKEN` (backwards compatibility) |
+| `PORT` | `4000` | HTTP port (only used with the optional HTTP transport) |
+| `NODE_ENV` | `development` | Environment name sent to Sentry |
+
+---
+
+## Project structure
 
 ```
-index.ts              # Entry point: transport setup
-mcp-server.ts         # McpServer creation and tool registration
-middleware/auth.ts    # Bearer / X-API-Key authentication
-tools/                # One file per tool
+bin.ts              # Dispatcher: routes to MCP server or CLI
+index.ts            # MCP server entry point (stdio transport)
+mcp-server.ts       # McpServer creation and tool registration
+cli/
+  index.ts          # CLI entry point (commander)
+  auth.ts           # Token resolution and auth commands
+middleware/
+  auth.ts           # Bearer / X-API-Key authentication middleware
+tools/              # One file per tool; each exports register() + a pure handler
 lib/
-  api.ts              # gfwFetch() — GFW API client
-  response.ts         # createToolResponse() / createErrorResponse()
-  types.ts            # Shared TypeScript types and dataset constants
+  api.ts            # gfwFetch() — GFW API client
+  response.ts       # createToolResponse() / createErrorResponse()
+  types.ts          # Shared TypeScript types and dataset constants
 ```

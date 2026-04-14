@@ -7,6 +7,38 @@ import { VesselSearchResponse } from '../lib/types.js';
 
 const DATASET = 'public-global-vessel-identity:v4.0';
 
+export async function vesselById({ ids }: { ids: string[] }) {
+  const params: Record<string, string> = {
+    'datasets[0]': DATASET,
+    ...Object.fromEntries(ids.map((id, i) => [`ids[${i}]`, id])),
+  };
+
+  const response = await gfwFetch('/v3/vessels', params);
+  const data: VesselSearchResponse = await response.json();
+
+  const results = data.entries.map((entry) => {
+    const info = entry.selfReportedInfo[0];
+    const combined = entry.combinedSourcesInfo[0];
+    const vesselId = info?.id ?? combined?.vesselId ?? '';
+    const from = info?.transmissionDateFrom;
+    const to = info?.transmissionDateTo;
+    return {
+      vesselId,
+      name: info?.shipname,
+      mmsi: info?.ssvid,
+      imo: info?.imo ?? undefined,
+      callsign: info?.callsign ?? undefined,
+      flag: info?.flag,
+      gearType: combined?.geartypes?.[0]?.name,
+      activeFrom: from,
+      activeTo: to,
+      mapUrl: vesselId ? generateVesselProfileUrl(vesselId, from, to) : null,
+    };
+  });
+
+  return { total: data.total, results };
+}
+
 export function register(server: McpServer) {
   server.registerTool(
     'vessel-by-id',
@@ -43,37 +75,9 @@ export function register(server: McpServer) {
         ),
       },
     },
-    async ({ ids }) => {
+    async (params) => {
       try {
-        const params: Record<string, string> = {
-          'datasets[0]': DATASET,
-          ...Object.fromEntries(ids.map((id, i) => [`ids[${i}]`, id])),
-        };
-
-        const response = await gfwFetch('/v3/vessels', params);
-        const data: VesselSearchResponse = await response.json();
-
-        const results = data.entries.map((entry) => {
-          const info = entry.selfReportedInfo[0];
-          const combined = entry.combinedSourcesInfo[0];
-          const vesselId = info?.id ?? combined?.vesselId ?? '';
-          const from = info?.transmissionDateFrom;
-          const to = info?.transmissionDateTo;
-          return {
-            vesselId,
-            name: info?.shipname,
-            mmsi: info?.ssvid,
-            imo: info?.imo ?? undefined,
-            callsign: info?.callsign ?? undefined,
-            flag: info?.flag,
-            gearType: combined?.geartypes?.[0]?.name,
-            activeFrom: from,
-            activeTo: to,
-            mapUrl: vesselId ? generateVesselProfileUrl(vesselId, from, to) : null,
-          };
-        });
-
-        const output = { total: data.total, results };
+        const output = await vesselById(params);
         return createToolResponse(JSON.stringify(output, null, 2), output);
       } catch (err) {
         return createErrorResponse(

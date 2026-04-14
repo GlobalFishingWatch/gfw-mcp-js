@@ -15,6 +15,141 @@ const datasetsByType = {
   loitering: 'public-global-loitering-events:latest',
 };
 
+export async function vesselEvents({
+  eventType,
+  startDate,
+  endDate,
+  vesselId,
+  limit,
+  offset,
+  confidence,
+  encounterTypes,
+  regionType,
+  regionId,
+}: {
+  eventType: 'fishing' | 'encounter' | 'port_visit' | 'loitering';
+  startDate: string;
+  endDate: string;
+  vesselId?: string;
+  limit?: number;
+  offset?: number;
+  confidence?: number[];
+  encounterTypes?: ('CARRIER-FISHING' | 'CARRIER-BUNKER' | 'FISHING-BUNKER' | 'FISHING-FISHING' | 'SUPPORT-FISHING')[];
+  regionType?: 'MPA' | 'EEZ' | 'RFMO';
+  regionId?: string;
+}) {
+  if (confidence !== undefined && eventType !== 'port_visit') {
+    return createErrorResponse(
+      'The confidence filter is only valid when eventType is "port_visit".',
+    );
+  }
+  if (encounterTypes !== undefined && eventType !== 'encounter') {
+    return createErrorResponse(
+      'The encounterTypes filter is only valid when eventType is "encounter".',
+    );
+  }
+  if ((regionType === undefined) !== (regionId === undefined)) {
+    return createErrorResponse(
+      'regionType and regionId must be provided together.',
+    );
+  }
+
+  const maxResults = limit ?? 20;
+  const pageOffset = offset ?? 0;
+  const dataset = datasetsByType[eventType];
+
+  const startIso = startDate
+    ? `${startDate}T00:00:00.000Z`
+    : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const endIso = endDate
+    ? `${endDate}T23:59:59.999Z`
+    : new Date().toISOString();
+
+  const params: Record<string, string> = {
+    'datasets[0]': dataset,
+    'start-date': startIso,
+    'end-date': endIso,
+    limit: String(maxResults),
+    offset: String(pageOffset),
+    sort: '-start',
+  };
+  if (vesselId) params['vessels[0]'] = vesselId;
+  if (regionType && regionId) {
+    params['region-ids[0]'] = regionId;
+    params['region-datasets[0]'] = REGION_DATASETS[regionType];
+  }
+  if (eventType === 'port_visit') {
+    const confidenceList = confidence ?? [4];
+    confidenceList.forEach((v, i) => {
+      params[`confidences[${i}]`] = String(v);
+    });
+  }
+  if (eventType === 'encounter') {
+    const encounterTypeList = encounterTypes ?? ['CARRIER-FISHING', 'SUPPORT-FISHING'];
+    const expanded: string[] = [];
+    for (const v of encounterTypeList) {
+      expanded.push(v);
+      if (v !== 'FISHING-FISHING') {
+        expanded.push(v.split('-').reverse().join('-'));
+      }
+    }
+    [...new Set(expanded)].forEach((v, i) => {
+      params[`encounter-types[${i}]`] = v;
+    });
+  }
+
+  const response = await gfwFetch('/v3/events', params);
+  const data: EventsResponse = await response.json();
+
+  const entries = data.entries.map((e) => {
+    const extrafields: any = {};
+    if (eventType === 'port_visit') {
+      extrafields['port'] = {
+        name: e.port_visit?.intermediateAnchorage?.name ?? null,
+        id: e.port_visit?.intermediateAnchorage?.id ?? null,
+        flag: e.port_visit?.intermediateAnchorage?.flag ?? null,
+      };
+    } else if (eventType === 'encounter') {
+      extrafields['encounteredVessel'] = {
+        name: e.encounter?.vessel?.name ?? null,
+        id: e.encounter?.vessel?.id ?? null,
+        flag: e.encounter?.vessel?.flag ?? null,
+        ssvid: e.encounter?.vessel?.ssvid ?? null,
+      };
+    }
+    return {
+      id: e.id,
+      type: e.type,
+      start: e.start,
+      end: e.end,
+      lat: e.position.lat,
+      lon: e.position.lon,
+      vesselId: e.vessel.id,
+      regions: {
+        mpa: e.regions.mpa ?? [],
+        eez: e.regions.eez ?? [],
+        rfmo: e.regions.rfmo ?? [],
+        fao: e.regions.fao ?? [],
+      },
+      ...extrafields,
+    };
+  });
+
+  const mapUrl =
+    vesselId && startDate && endDate
+      ? generateVesselProfileUrl(vesselId, startDate, endDate, [eventType])
+      : null;
+
+  return {
+    total: data.total,
+    limit: data.limit,
+    offset: data.offset,
+    nextOffset: data.nextOffset || 0,
+    entries,
+    mapUrl,
+  };
+}
+
 export function register(server: McpServer) {
   server.registerTool(
     'vessel-events',
@@ -155,136 +290,10 @@ export function register(server: McpServer) {
           ),
       },
     },
-    async ({
-      eventType,
-      startDate,
-      endDate,
-      vesselId,
-      limit,
-      offset,
-      confidence,
-      encounterTypes,
-      regionType,
-      regionId,
-    }) => {
+    async (params) => {
       try {
-        const maxResults = limit ?? 20;
-        const pageOffset = offset ?? 0;
-
-        if (confidence !== undefined && eventType !== 'port_visit') {
-          return createErrorResponse(
-            'The confidence filter is only valid when eventType is "port_visit".',
-          );
-        }
-        if (encounterTypes !== undefined && eventType !== 'encounter') {
-          return createErrorResponse(
-            'The encounterTypes filter is only valid when eventType is "encounter".',
-          );
-        }
-        if ((regionType === undefined) !== (regionId === undefined)) {
-          return createErrorResponse(
-            'regionType and regionId must be provided together.',
-          );
-        }
-        const dataset = datasetsByType[eventType];
-
-        const startIso = startDate
-          ? `${startDate}T00:00:00.000Z`
-          : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const endIso = endDate
-          ? `${endDate}T23:59:59.999Z`
-          : new Date().toISOString();
-
-        const params: Record<string, string> = {
-          'datasets[0]': dataset,
-          'start-date': startIso,
-          'end-date': endIso,
-          limit: String(maxResults),
-          offset: String(pageOffset),
-          sort: '-start',
-        };
-        if (vesselId) params['vessels[0]'] = vesselId;
-        if (regionType && regionId) {
-          params['region-ids[0]'] = regionId;
-          params['region-datasets[0]'] = REGION_DATASETS[regionType];
-        }
-        if (eventType === 'port_visit') {
-          const confidenceList = confidence ?? [4];
-          confidenceList.forEach((v, i) => {
-            params[`confidences[${i}]`] = String(v);
-          });
-        }
-        if (eventType === 'encounter') {
-          const encounterTypeList = encounterTypes ?? [
-            'CARRIER-FISHING',
-            'SUPPORT-FISHING',
-          ];
-          const expanded: string[] = [];
-          for (const v of encounterTypeList) {
-            expanded.push(v);
-            if (v !== 'FISHING-FISHING') {
-              expanded.push(v.split('-').reverse().join('-'));
-            }
-          }
-          [...new Set(expanded)].forEach((v, i) => {
-            params[`encounter-types[${i}]`] = v;
-          });
-        }
-
-        const response = await gfwFetch('/v3/events', params);
-        const data: EventsResponse = await response.json();
-
-        const entries = data.entries.map((e) => {
-          const extrafields: any = {};
-          if (eventType === 'port_visit') {
-            extrafields['port'] = {
-              name: e.port_visit?.intermediateAnchorage?.name ?? null,
-              id: e.port_visit?.intermediateAnchorage?.id ?? null,
-              flag: e.port_visit?.intermediateAnchorage?.flag ?? null,
-            };
-          } else if (eventType === 'encounter') {
-            extrafields['encounteredVessel'] = {
-              name: e.encounter?.vessel?.name ?? null,
-              id: e.encounter?.vessel?.id ?? null,
-              flag: e.encounter?.vessel?.flag ?? null,
-              ssvid: e.encounter?.vessel?.ssvid ?? null,
-            };
-          }
-          return {
-            id: e.id,
-            type: e.type,
-            start: e.start,
-            end: e.end,
-            lat: e.position.lat,
-            lon: e.position.lon,
-            vesselId: e.vessel.id,
-            regions: {
-              mpa: e.regions.mpa ?? [],
-              eez: e.regions.eez ?? [],
-              rfmo: e.regions.rfmo ?? [],
-              fao: e.regions.fao ?? [],
-            },
-            ...extrafields,
-          };
-        });
-
-        const mapUrl =
-          vesselId && startDate && endDate
-            ? generateVesselProfileUrl(vesselId, startDate, endDate, [
-                eventType,
-              ])
-            : null;
-
-        const output = {
-          total: data.total,
-          limit: data.limit,
-          offset: data.offset,
-          nextOffset: data.nextOffset || 0,
-          entries,
-          mapUrl,
-        };
-
-        return createToolResponse(JSON.stringify(output, null, 2), output);
+        const output = await vesselEvents(params);
+        return createToolResponse(JSON.stringify(output, null, 2), output as Record<string, unknown>);
       } catch (err) {
         return createErrorResponse(
           `Failed to fetch vessel events: ${err instanceof Error ? err.message : String(err)}`,

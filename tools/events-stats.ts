@@ -13,6 +13,91 @@ const datasetsByType = {
 
 const MAX_FETCH = 500;
 
+export async function eventsStats({
+  eventType,
+  startDate,
+  endDate,
+  confidence,
+  encounterTypes,
+  regionType,
+  regionId,
+  groupBy = 'FLAG',
+}: {
+  eventType: 'fishing' | 'encounter' | 'port_visit' | 'loitering';
+  startDate: string;
+  endDate: string;
+  confidence?: number[];
+  encounterTypes?: ('CARRIER-FISHING' | 'CARRIER-BUNKER' | 'FISHING-BUNKER' | 'FISHING-FISHING' | 'SUPPORT-FISHING')[];
+  regionType?: 'MPA' | 'EEZ' | 'RFMO';
+  regionId?: string;
+  groupBy?: 'FLAG' | 'GEARTYPE';
+}) {
+  if (confidence !== undefined && eventType !== 'port_visit') {
+    return createErrorResponse(
+      'The confidence filter is only valid when eventType is "port_visit".',
+    );
+  }
+  if (encounterTypes !== undefined && eventType !== 'encounter') {
+    return createErrorResponse(
+      'The encounterTypes filter is only valid when eventType is "encounter".',
+    );
+  }
+  if ((regionType === undefined) !== (regionId === undefined)) {
+    return createErrorResponse(
+      'regionType and regionId must be provided together.',
+    );
+  }
+
+  const dataset = datasetsByType[eventType];
+  const startIso = startDate
+    ? `${startDate}T00:00:00.000Z`
+    : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const endIso = endDate
+    ? `${endDate}T23:59:59.999Z`
+    : new Date().toISOString();
+
+  const params: Record<string, string> = {
+    'datasets[0]': dataset,
+    'start-date': startIso,
+    'end-date': endIso,
+    'group-by': groupBy.toUpperCase(),
+    'time-filter-mode': 'START-DATE',
+    'includes[0]': 'EVENTS_GROUPED',
+    'includes[1]': 'TOTAL_COUNT',
+    'timeseries-interval': 'YEAR',
+  };
+
+  if (regionType && regionId) {
+    params['region-ids[0]'] = regionId;
+    params['region-datasets[0]'] = REGION_DATASETS[regionType];
+  }
+
+  if (eventType === 'port_visit') {
+    const confidenceList = confidence ?? [4];
+    confidenceList.forEach((v, i) => {
+      params[`confidences[${i}]`] = String(v);
+    });
+  }
+
+  if (eventType === 'encounter') {
+    const encounterTypeList = encounterTypes ?? ['CARRIER-FISHING', 'SUPPORT-FISHING'];
+    const expanded: string[] = [];
+    for (const v of encounterTypeList) {
+      expanded.push(v);
+      if (v !== 'FISHING-FISHING') {
+        expanded.push(v.split('-').reverse().join('-'));
+      }
+    }
+    [...new Set(expanded)].forEach((v, i) => {
+      params[`encounter-types[${i}]`] = v;
+    });
+  }
+
+  const response = await gfwFetch('/v3/events/stats', params);
+  const data: EventsResponse = await response.json();
+  return data;
+}
+
 export function register(server: McpServer) {
   server.registerTool(
     'events-stats',
@@ -101,91 +186,10 @@ export function register(server: McpServer) {
           ),
       },
     },
-    async ({
-      eventType,
-      startDate,
-      endDate,
-      confidence,
-      encounterTypes,
-      regionType,
-      regionId,
-      groupBy = 'FLAG',
-    }) => {
+    async (params) => {
       try {
-        if (confidence !== undefined && eventType !== 'port_visit') {
-          return createErrorResponse(
-            'The confidence filter is only valid when eventType is "port_visit".',
-          );
-        }
-        if (encounterTypes !== undefined && eventType !== 'encounter') {
-          return createErrorResponse(
-            'The encounterTypes filter is only valid when eventType is "encounter".',
-          );
-        }
-        if ((regionType === undefined) !== (regionId === undefined)) {
-          return createErrorResponse(
-            'regionType and regionId must be provided together.',
-          );
-        }
-
-        const dataset = datasetsByType[eventType];
-        const startIso = startDate
-          ? `${startDate}T00:00:00.000Z`
-          : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const endIso = endDate
-          ? `${endDate}T23:59:59.999Z`
-          : new Date().toISOString();
-
-        const allEntries: EventsResponse['entries'] = [];
-        const pageSize = 100;
-        let offset = 0;
-        let total = Infinity;
-
-        const params: Record<string, string> = {
-          'datasets[0]': dataset,
-          'start-date': startIso,
-          'end-date': endIso,
-          'group-by': groupBy.toUpperCase(),
-          'time-filter-mode': 'START-DATE',
-          'includes[0]': 'EVENTS_GROUPED',
-          'includes[1]': 'TOTAL_COUNT',
-          'timeseries-interval': 'YEAR',
-        };
-
-        if (regionType && regionId) {
-          // TODO: verify events API supports these region filter params
-          params['region-ids[0]'] = regionId;
-          params['region-datasets[0]'] = REGION_DATASETS[regionType];
-        }
-
-        if (eventType === 'port_visit') {
-          const confidenceList = confidence ?? [4];
-          confidenceList.forEach((v, i) => {
-            params[`confidences[${i}]`] = String(v);
-          });
-        }
-
-        if (eventType === 'encounter') {
-          const encounterTypeList = encounterTypes ?? [
-            'CARRIER-FISHING',
-            'SUPPORT-FISHING',
-          ];
-          const expanded: string[] = [];
-          for (const v of encounterTypeList) {
-            expanded.push(v);
-            if (v !== 'FISHING-FISHING') {
-              expanded.push(v.split('-').reverse().join('-'));
-            }
-          }
-          [...new Set(expanded)].forEach((v, i) => {
-            params[`encounter-types[${i}]`] = v;
-          });
-        }
-
-        const response = await gfwFetch('/v3/events/stats', params);
-        const data: EventsResponse = await response.json();
-
-        return createToolResponse(JSON.stringify(data, null, 2), data);
+        const data = await eventsStats(params);
+        return createToolResponse(JSON.stringify(data, null, 2), data as Record<string, unknown>);
       } catch (err) {
         return createErrorResponse(
           `Failed to compute event statistics: ${err instanceof Error ? err.message : String(err)}`,

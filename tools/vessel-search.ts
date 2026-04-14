@@ -7,6 +7,76 @@ import { VesselSearchResponse } from '../lib/types.js';
 
 const DATASET = 'public-global-vessel-identity:v4.0';
 
+export async function vesselSearch({
+  name,
+  mmsi,
+  imo,
+  callsign,
+  flag,
+  activeFrom,
+  activeTo,
+  limit,
+}: {
+  name?: string;
+  mmsi?: string;
+  imo?: string;
+  callsign?: string;
+  flag?: string;
+  activeFrom?: string;
+  activeTo?: string;
+  limit?: number;
+}) {
+  const maxResults = limit ?? 10;
+
+  const conditions: string[] = [];
+  if (callsign) conditions.push(`callsign = '${callsign.toUpperCase()}'`);
+  if (flag) conditions.push(`flag = '${flag.toUpperCase()}'`);
+  if (imo) conditions.push(`imo = '${imo.toUpperCase()}'`);
+  if (mmsi) conditions.push(`ssvid = '${mmsi.toUpperCase()}'`);
+  if (activeTo)
+    conditions.push(`transmissionDateFrom < '${activeTo}T23:59:59Z'`);
+  if (activeFrom)
+    conditions.push(`transmissionDateTo > '${activeFrom}T00:00:00Z'`);
+  if (name) conditions.push(`shipname LIKE '*${name.toUpperCase()}*'`);
+
+  if (conditions.length === 0) {
+    return createErrorResponse(
+      'No search criteria provided. At least one filter must be specified for a meaningful search.',
+    );
+  }
+
+  const params: Record<string, string> = {
+    'datasets[0]': DATASET,
+    limit: String(maxResults),
+    where: conditions.join(' AND '),
+  };
+
+  const response = await gfwFetch('/v3/vessels/search', params);
+  const data: VesselSearchResponse = await response.json();
+
+  const results = data.entries.map((entry) => {
+    const info = entry.selfReportedInfo[0];
+    const combined = entry.combinedSourcesInfo[0];
+    const vesselId = info?.id ?? combined?.vesselId ?? '';
+    const from = info?.transmissionDateFrom;
+    const to = info?.transmissionDateTo;
+    return {
+      vesselId,
+      name: info?.shipname,
+      mmsi: info?.ssvid,
+      imo: info?.imo ?? undefined,
+      callsign: info?.callsign ?? undefined,
+      flag: info?.flag,
+      gearType: combined?.geartypes?.[0]?.name,
+      activeFrom: from,
+      activeTo: to,
+      mapUrl: vesselId ? generateVesselProfileUrl(vesselId, from, to) : null,
+    };
+  });
+
+  return { total: data.total, limit: data.limit, results };
+}
+
 export function register(server: McpServer) {
   server.registerTool(
     'vessel-search',
@@ -100,68 +170,9 @@ export function register(server: McpServer) {
         ),
       },
     },
-    async ({
-      name,
-      mmsi,
-      imo,
-      callsign,
-      flag,
-      activeFrom,
-      activeTo,
-      limit,
-    }) => {
+    async (params) => {
       try {
-        const maxResults = limit ?? 10;
-
-        const conditions: string[] = [];
-        if (callsign) conditions.push(`callsign = '${callsign.toUpperCase()}'`);
-        if (flag) conditions.push(`flag = '${flag.toUpperCase()}'`);
-        if (imo) conditions.push(`imo = '${imo.toUpperCase()}'`);
-        if (mmsi) conditions.push(`ssvid = '${mmsi.toUpperCase()}'`);
-        if (activeTo)
-          conditions.push(`transmissionDateFrom < '${activeTo}T23:59:59Z'`);
-        if (activeFrom)
-          conditions.push(`transmissionDateTo > '${activeFrom}T00:00:00Z'`);
-        if (name) conditions.push(`shipname LIKE '*${name.toUpperCase()}*'`);
-
-        if (conditions.length === 0) {
-          return createErrorResponse(
-            'No search criteria provided. At least one filter must be specified for a meaningful search.',
-          );
-        }
-
-        const params: Record<string, string> = {
-          'datasets[0]': DATASET,
-          limit: String(maxResults),
-          where: conditions.join(' AND '),
-        };
-
-        const response = await gfwFetch('/v3/vessels/search', params);
-        const data: VesselSearchResponse = await response.json();
-
-        const results = data.entries.map((entry) => {
-          const info = entry.selfReportedInfo[0];
-          const combined = entry.combinedSourcesInfo[0];
-          const vesselId = info?.id ?? combined?.vesselId ?? '';
-          const from = info?.transmissionDateFrom;
-          const to = info?.transmissionDateTo;
-          return {
-            vesselId,
-            name: info?.shipname,
-            mmsi: info?.ssvid,
-            imo: info?.imo ?? undefined,
-            callsign: info?.callsign ?? undefined,
-            flag: info?.flag,
-            gearType: combined?.geartypes?.[0]?.name,
-            activeFrom: from,
-            activeTo: to,
-            mapUrl: vesselId
-              ? generateVesselProfileUrl(vesselId, from, to)
-              : null,
-          };
-        });
-
-        const output = { total: data.total, limit: data.limit, results };
+        const output = await vesselSearch(params);
         return createToolResponse(JSON.stringify(output, null, 2), output);
       } catch (err) {
         return createErrorResponse(

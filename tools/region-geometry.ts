@@ -5,6 +5,18 @@ import { REGION_DATASETS } from '../lib/types.js';
 
 const GFW_BASE = 'https://gateway.api.globalfishingwatch.org';
 
+export function regionGeometry({
+  regionType,
+  id,
+}: {
+  regionType: 'MPA' | 'EEZ' | 'RFMO';
+  id: string;
+}) {
+  const dataset = REGION_DATASETS[regionType];
+  const url = `${GFW_BASE}/v3/datasets/${dataset}/context-layers/${id}`;
+  return { regionType, id, url };
+}
+
 export function register(server: McpServer) {
   server.registerTool(
     'region-geometry',
@@ -26,10 +38,8 @@ export function register(server: McpServer) {
         url: z.string().describe('URL to fetch the GeoJSON geometry of the region'),
       },
     },
-    async ({ regionType, id }) => {
-      const dataset = REGION_DATASETS[regionType];
-      const url = `${GFW_BASE}/v3/datasets/${dataset}/context-layers/${id}`;
-      const output: Record<string, unknown> = { regionType, id, url };
+    async (params) => {
+      const output = regionGeometry(params);
       return createToolResponse(JSON.stringify(output, null, 2), output);
     },
   );

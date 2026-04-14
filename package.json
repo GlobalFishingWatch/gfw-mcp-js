@@ -1,28 +1,47 @@
 {
+  "name": "@globalfishingwatch/mcp",
+  "version": "0.0.3",
+  "description": "MCP server for Global Fishing Watch data — vessel search, events, fishing hours, and region lookups",
+  "author": "Global Fishing Watch",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "global-fishing-watch",
+    "gfw",
+    "fishing",
+    "vessels",
+    "ais"
+  ],
+  "main": "./dist/index.js",
+  "bin": {
+    "gfw-mcp": "./dist/bin.js"
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx index.ts",
+    "cli": "tsx cli/index.ts",
+    "link": "npm run build && npm link",
+    "prepublishOnly": "npm run build"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.22.0",
     "@sentry/node": "^10.48.0",
     "axios": "^1.13.6",
+    "commander": "^14.0.3",
     "express": "^5.1.0",
     "qs": "^6.15.1",
+    "undici": "^7.25.0",
     "zod": "^3.25.76"
   },
-  "name": "gfw-mcp-js",
-  "version": "1.0.0",
-  "main": "index.js",
   "devDependencies": {
     "@types/express": "^5.0.5",
     "@types/node": "^24.10.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "npm run build && node dist/index.js",
-    "dev": "npx tsx index.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  }
 }

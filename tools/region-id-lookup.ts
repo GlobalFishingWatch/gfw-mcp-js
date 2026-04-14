@@ -11,6 +11,36 @@ function score(label: string, query: string): number {
   return words.filter((w) => lowerLabel.includes(w)).length;
 }
 
+export async function regionIdLookup({
+  regionType,
+  query,
+  limit,
+}: {
+  regionType: 'MPA' | 'EEZ' | 'RFMO';
+  query: string;
+  limit?: number;
+}) {
+  const maxResults = limit ?? 5;
+  const dataset = REGION_DATASETS[regionType];
+
+  const response = await gfwFetch(`/v3/datasets/${dataset}/context-layers`);
+  const layers: ContextLayer[] = await response.json();
+
+  const matches = layers
+    .map((layer) => ({ layer, s: score(layer.label, query) }))
+    .filter(({ s }) => s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, maxResults)
+    .map(({ layer }) => ({
+      id: String(layer.id),
+      name: layer.label,
+      country: layer.iso3 ?? undefined,
+      source: dataset,
+    }));
+
+  return { regionType, query, limit: maxResults, matches };
+}
+
 export function register(server: McpServer) {
   server.registerTool(
     'region-id-lookup',
@@ -56,29 +86,9 @@ export function register(server: McpServer) {
         ),
       },
     },
-    async ({ regionType, query, limit }) => {
+    async (params) => {
       try {
-        const maxResults = limit ?? 5;
-        const dataset = REGION_DATASETS[regionType];
-
-        const response = await gfwFetch(
-          `/v3/datasets/${dataset}/context-layers`,
-        );
-        const layers: ContextLayer[] = await response.json();
-
-        const matches = layers
-          .map((layer) => ({ layer, s: score(layer.label, query) }))
-          .filter(({ s }) => s > 0)
-          .sort((a, b) => b.s - a.s)
-          .slice(0, maxResults)
-          .map(({ layer }) => ({
-            id: String(layer.id),
-            name: layer.label,
-            country: layer.iso3 ?? undefined,
-            source: dataset,
-          }));
-
-        const output = { regionType, query, limit: maxResults, matches };
+        const output = await regionIdLookup(params);
         return createToolResponse(JSON.stringify(output, null, 2), output);
       } catch (err) {
         return createErrorResponse(

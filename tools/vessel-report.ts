@@ -11,6 +11,139 @@ import {
   ReportResponse,
 } from '../lib/types.js';
 
+export async function vesselReport({
+  regionType,
+  regionId,
+  startDate,
+  endDate,
+  type,
+  flags,
+  vesselTypes,
+  speeds,
+  geartypes,
+  groupBy,
+}: {
+  regionType: 'MPA' | 'EEZ' | 'RFMO';
+  regionId: string;
+  startDate: string;
+  endDate: string;
+  type?: 'FISHING' | 'PRESENCE';
+  flags?: string[];
+  vesselTypes?: string[];
+  speeds?: string[];
+  geartypes?: string[];
+  groupBy?: 'VESSEL_ID' | 'FLAG' | 'GEARTYPE' | 'FLAGANDGEARTYPE';
+}) {
+  const activityType: ActivityType = type ?? 'FISHING';
+  const groupByValue = groupBy ?? 'VESSEL_ID';
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const msInYear = 365 * 24 * 60 * 60 * 1000;
+  if (end.getTime() - start.getTime() > msInYear) {
+    return createErrorResponse(
+      'The report date range cannot exceed 1 year. Please reduce the range between startDate and endDate.',
+    );
+  }
+
+  if (activityType === 'PRESENCE' && (groupByValue === 'GEARTYPE' || groupByValue === 'FLAGANDGEARTYPE')) {
+    return createErrorResponse(
+      'groupBy "GEARTYPE" and "FLAGANDGEARTYPE" are only valid when type is "FISHING".',
+    );
+  }
+  if (activityType === 'FISHING' && Array.isArray(vesselTypes) && vesselTypes.length > 0) {
+    return createErrorResponse('vesselTypes filter is only valid when type is "PRESENCE".');
+  }
+  if (activityType === 'PRESENCE' && Array.isArray(geartypes) && geartypes.length > 0) {
+    return createErrorResponse('geartypes filter is only valid when type is "FISHING".');
+  }
+
+  const activityDataset = ACTIVITY_DATASETS[activityType];
+  const flagList = Array.isArray(flags) ? flags : [];
+  const speedList = Array.isArray(speeds) ? speeds : [];
+  const vesselTypeList = Array.isArray(vesselTypes) ? vesselTypes : [];
+  const geartypeList = Array.isArray(geartypes) ? geartypes : [];
+
+  const filters = [];
+  if (flagList.length > 0) filters.push(`flag IN (${flagList.map((f) => `'${f}'`).join(',')})`);
+  if (speedList.length > 0) filters.push(`speed IN (${speedList.map((s) => `'${s}'`).join(',')})`);
+  if (vesselTypeList.length > 0) filters.push(`vessel_type IN (${vesselTypeList.map((t) => `'${t}'`).join(',')})`);
+  if (geartypeList.length > 0) filters.push(`geartype IN (${geartypeList.map((g) => `'${g}'`).join(',')})`);
+
+  const params: Record<string, string> = {
+    format: 'JSON',
+    'datasets[0]': activityDataset,
+    'date-range': `${startDate}T00:00:00.000Z,${endDate}T23:59:59.999Z`,
+    'spatial-aggregation': 'true',
+    'temporal-resolution': 'ENTIRE',
+    'region-id': regionId,
+    'region-dataset': REGION_DATASETS[regionType],
+    'group-by': groupByValue,
+  };
+  if (filters.length > 0) params['filters[0]'] = filters.join(' AND ');
+
+  const response = await gfwFetch('/v3/4wings/report', params);
+  const data: ReportResponse = await response.json();
+
+  const allRows: FishingEffortEntry[] = data.entries.flatMap((entry) => entry[activityDataset] ?? []);
+  const fishingHours = allRows.reduce((sum, row) => sum + row.hours, 0);
+
+  const topVessels =
+    groupByValue === 'VESSEL_ID'
+      ? [...allRows].sort((a, b) => b.hours - a.hours).slice(0, 10).map((row) => ({
+          vesselId: row.vesselId,
+          shipName: row.shipName,
+          mmsi: row.mmsi,
+          flag: row.flag,
+          geartype: row.geartype,
+          hours: row.hours,
+        }))
+      : undefined;
+
+  const rows = (() => {
+    if (groupByValue === 'VESSEL_ID') return undefined;
+    const aggregated = new Map<string, { key: Record<string, string | undefined>; hours: number }>();
+    for (const row of allRows) {
+      const key =
+        groupByValue === 'FLAG' ? row.flag
+        : groupByValue === 'GEARTYPE' ? row.geartype
+        : `${row.flag}__${row.geartype}`;
+      const keyFields: Record<string, string | undefined> =
+        groupByValue === 'FLAG' ? { flag: row.flag }
+        : groupByValue === 'GEARTYPE' ? { geartype: row.geartype }
+        : { flag: row.flag, geartype: row.geartype };
+      const existing = aggregated.get(key);
+      if (existing) {
+        existing.hours += row.hours;
+      } else {
+        aggregated.set(key, { key: keyFields, hours: row.hours });
+      }
+    }
+    return [...aggregated.values()].sort((a, b) => b.hours - a.hours).map(({ key, hours }) => ({ ...key, hours }));
+  })();
+
+  const gfwMapUrl = generateReportUrl(regionId, regionType, activityType, startDate, endDate, {
+    speed: speedList,
+    vesselType: vesselTypeList,
+    geartype: geartypeList,
+    flag: flagList,
+  });
+
+  return {
+    regionType,
+    regionId,
+    dateRange: { start: startDate, end: endDate },
+    fishingHours,
+    ...(topVessels && { topVessels }),
+    ...(rows && { rows }),
+    ...(flagList.length > 0 && { flags: flagList }),
+    ...(vesselTypeList.length > 0 && { vesselTypes: vesselTypeList }),
+    ...(speedList.length > 0 && { speeds: speedList }),
+    ...(geartypeList.length > 0 && { geartypes: geartypeList }),
+    gfwMapUrl,
+  };
+}
+
 export function register(server: McpServer) {
   server.registerTool(
     'vessel-report',
@@ -183,197 +316,24 @@ export function register(server: McpServer) {
           ),
       },
     },
-    async ({
-      regionType,
-      regionId,
-      startDate,
-      endDate,
-      type,
-      flags,
-      vesselTypes,
-      speeds,
-      geartypes,
-      groupBy,
-    }) => {
-      const activityType: ActivityType = type ?? 'FISHING';
-      const groupByValue = groupBy ?? 'VESSEL_ID';
+    async (params) => {
       try {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const msInYear = 365 * 24 * 60 * 60 * 1000;
-        if (end.getTime() - start.getTime() > msInYear) {
-          return createErrorResponse(
-            'The report date range cannot exceed 1 year. Please reduce the range between startDate and endDate.',
-          );
-        }
-
-        if (
-          activityType === 'PRESENCE' &&
-          (groupByValue === 'GEARTYPE' || groupByValue === 'FLAGANDGEARTYPE')
-        ) {
-          return createErrorResponse(
-            'groupBy "GEARTYPE" and "FLAGANDGEARTYPE" are only valid when type is "FISHING".',
-          );
-        }
-
-        if (
-          activityType === 'FISHING' &&
-          Array.isArray(vesselTypes) &&
-          vesselTypes.length > 0
-        ) {
-          return createErrorResponse(
-            'vesselTypes filter is only valid when type is "PRESENCE".',
-          );
-        }
-        if (
-          activityType === 'PRESENCE' &&
-          Array.isArray(geartypes) &&
-          geartypes.length > 0
-        ) {
-          return createErrorResponse(
-            'geartypes filter is only valid when type is "FISHING".',
-          );
-        }
-
-        const activityDataset = ACTIVITY_DATASETS[activityType];
-        const flagList = Array.isArray(flags) ? flags : [];
-        const speedList = Array.isArray(speeds) ? speeds : [];
-        const vesselTypeList = Array.isArray(vesselTypes) ? vesselTypes : [];
-        const geartypeList = Array.isArray(geartypes) ? geartypes : [];
-
-        const filters = [];
-        if (flagList.length > 0) {
-          filters.push(`flag IN (${flagList.map((f) => `'${f}'`).join(',')})`);
-        }
-        if (speedList.length > 0) {
-          filters.push(
-            `speed IN (${speedList.map((s) => `'${s}'`).join(',')})`,
-          );
-        }
-        if (vesselTypeList.length > 0) {
-          filters.push(
-            `vessel_type IN (${vesselTypeList.map((t) => `'${t}'`).join(',')})`,
-          );
-        }
-        if (geartypeList.length > 0) {
-          filters.push(
-            `geartype IN (${geartypeList.map((g) => `'${g}'`).join(',')})`,
-          );
-        }
-
-        const params: Record<string, string> = {
-          format: 'JSON',
-          'datasets[0]': activityDataset,
-          'date-range': `${startDate}T00:00:00.000Z,${endDate}T23:59:59.999Z`,
-          'spatial-aggregation': 'true',
-          'temporal-resolution': 'ENTIRE',
-          'region-id': regionId,
-          'region-dataset': REGION_DATASETS[regionType],
-          'group-by': groupByValue,
-        };
-        if (filters.length > 0) {
-          params['filters[0]'] = filters.join(' AND ');
-        }
-
-        const response = await gfwFetch('/v3/4wings/report', params);
-        const data: ReportResponse = await response.json();
-
-        const allRows: FishingEffortEntry[] = data.entries.flatMap(
-          (entry) => entry[activityDataset] ?? [],
-        );
-
-        const fishingHours = allRows.reduce((sum, row) => sum + row.hours, 0);
-
-        const topVessels =
-          groupByValue === 'VESSEL_ID'
-            ? [...allRows]
-                .sort((a, b) => b.hours - a.hours)
-                .slice(0, 10)
-                .map((row) => ({
-                  vesselId: row.vesselId,
-                  shipName: row.shipName,
-                  mmsi: row.mmsi,
-                  flag: row.flag,
-                  geartype: row.geartype,
-                  hours: row.hours,
-                }))
-            : undefined;
-
-        const rows = (() => {
-          if (groupByValue === 'VESSEL_ID') return undefined;
-
-          const aggregated = new Map<
-            string,
-            { key: Record<string, string | undefined>; hours: number }
-          >();
-          for (const row of allRows) {
-            const key =
-              groupByValue === 'FLAG'
-                ? row.flag
-                : groupByValue === 'GEARTYPE'
-                  ? row.geartype
-                  : `${row.flag}__${row.geartype}`;
-            const keyFields: Record<string, string | undefined> =
-              groupByValue === 'FLAG'
-                ? { flag: row.flag }
-                : groupByValue === 'GEARTYPE'
-                  ? { geartype: row.geartype }
-                  : { flag: row.flag, geartype: row.geartype };
-            const existing = aggregated.get(key);
-            if (existing) {
-              existing.hours += row.hours;
-            } else {
-              aggregated.set(key, { key: keyFields, hours: row.hours });
-            }
-          }
-
-          return [...aggregated.values()]
-            .sort((a, b) => b.hours - a.hours)
-            .map(({ key, hours }) => ({ ...key, hours }));
-        })();
-
-        const gfwMapUrl = generateReportUrl(
-          regionId,
-          regionType,
-          activityType,
-          startDate,
-          endDate,
-          {
-            speed: speedList,
-            vesselType: vesselTypeList,
-            geartype: geartypeList,
-            flag: flagList,
-          },
-        );
-
-        const output = {
-          regionType,
-          regionId,
-          dateRange: { start: startDate, end: endDate },
-          fishingHours,
-          ...(topVessels && { topVessels }),
-          ...(rows && { rows }),
-          ...(flagList.length > 0 && { flags: flagList }),
-          ...(vesselTypeList.length > 0 && { vesselTypes: vesselTypeList }),
-          ...(speedList.length > 0 && { speeds: speedList }),
-          ...(geartypeList.length > 0 && { geartypes: geartypeList }),
-          gfwMapUrl,
-        };
-
-        const flagText =
-          flagList.length > 0 ? `\nFlag Filters: ${flagList.join(', ')}` : '';
-        const responseText = `${activityType === 'FISHING' ? 'Fishing Hours Report' : 'Presence Hours Report'} for ${regionType} ID: ${regionId}${flagText}
-Date Range: ${startDate} to ${endDate}
+        const output = await vesselReport(params);
+        if ('isError' in output) return output;
+        const flagText = output.flags && output.flags.length > 0 ? `\nFlag Filters: ${output.flags.join(', ')}` : '';
+        const activityType = params.type ?? 'FISHING';
+        const responseText = `${activityType === 'FISHING' ? 'Fishing Hours Report' : 'Presence Hours Report'} for ${output.regionType} ID: ${output.regionId}${flagText}
+Date Range: ${output.dateRange.start} to ${output.dateRange.end}
 
 Total ${activityType} Hours: ${output.fishingHours} hours
 
 View detailed data on the Global Fishing Watch map:
-${gfwMapUrl}
+${output.gfwMapUrl}
 
 Full data: ${JSON.stringify(output, null, 2)}`;
-
-        return createToolResponse(responseText, output);
+        return createToolResponse(responseText, output as unknown as Record<string, unknown>);
       } catch (err) {
+        const activityType = params.type ?? 'FISHING';
         return createErrorResponse(
           `Failed to generate ${activityType} hours report: ${err instanceof Error ? err.message : String(err)}`,
         );
