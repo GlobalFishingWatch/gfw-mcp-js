@@ -85,7 +85,7 @@ export function generateVesselProfileUrl(
 
   let dynamicPath = `/${vesselId}?`;
   if (activeFrom && activeTo) {
-    dynamicPath += `&activeFrom=${activeFrom}&activeTo=${activeTo}`;
+    dynamicPath += `&start=${activeFrom}&end=${activeTo}`;
   }
   if (events.length > 0) {
     dynamicPath += events.map((e, i) => `vE[${i}]=${e}`).join('&');

@@ -67,13 +67,13 @@ GFW_TOKEN=your_key npx @globalfishingwatch/mcp vessel-search --name "Maria"
 
 #### vessel-search
 
+Search vessels by name, MMSI, IMO, callsign, flag, gear type, or activity date range. At least one filter must be provided.
+
 ```bash
 npx @globalfishingwatch/mcp vessel-search [--name <name>] [--mmsi <mmsi>] [--imo <imo>]
   [--callsign <cs>] [--flag <ISO3>] [--active-from <YYYY-MM-DD>]
   [--active-to <YYYY-MM-DD>] [--limit <n>]
 ```
-
-At least one filter must be provided.
 
 | Parameter | Format / values |
 |-----------|----------------|
@@ -83,13 +83,29 @@ At least one filter must be provided.
 | `--active-from` / `--active-to` | `YYYY-MM-DD` |
 | `--limit` | 1–50 (default 10) |
 
+**Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, and `mapUrl`.
+
+**When to use:** When you have partial vessel information (name, identifiers, flag state) and need to find a vessel or a list of vessels. Use `vessel-by-id` instead if you already have the GFW vessel ID.
+
+**Notes:**
+- `mapUrl` links directly to the vessel's profile on the GFW map — always show it to the user.
+- `--active-to` is exclusive (vessels active *before* that date are included).
+
 #### vessel-by-id
+
+Retrieve one or more vessels by their GFW vessel IDs. Returns the same metadata as `vessel-search`.
 
 ```bash
 npx @globalfishingwatch/mcp vessel-by-id --ids <id> [<id2> ...]
 ```
 
+**Returns:** `{ total, results[] }` — same fields as `vessel-search` results: `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `mapUrl`.
+
+**When to use:** When you already know the GFW vessel ID(s) and want to fetch their full profiles directly, without a search query.
+
 #### vessel-events
+
+Retrieve individual fishing, encounter, port visit, or loitering events. Filter by vessel, region, date range, confidence, and encounter type.
 
 ```bash
 npx @globalfishingwatch/mcp vessel-events --event-type <fishing|encounter|port_visit|loitering>
@@ -109,7 +125,20 @@ npx @globalfishingwatch/mcp vessel-events --event-type <fishing|encounter|port_v
 | `--encounter-types` | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
 | `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
 
+**Returns:** `{ total, limit, offset, nextOffset, entries[], mapUrl }` — each entry includes `id`, `type`, `start`, `end`, `lat`, `lon`, `vesselId`, and `regions` (lists of intersecting MPA, EEZ, RFMO, and FAO IDs). Port visit events additionally include a `port` object (`name`, `id`, `flag`); encounter events additionally include an `encounteredVessel` object (`name`, `id`, `flag`, `ssvid`). `mapUrl` links to the vessel's profile on the GFW map for the queried period.
+
+**When to use:** When you need to see *individual* events (exact time, position, details) for a vessel or inside a region. Use `events-stats` instead when you only need aggregate counts or breakdowns.
+
+**Notes:**
+- Results are sorted by start date descending (most recent first).
+- `--region-type` and `--region-id` must always be provided together.
+- `--confidence` is only valid for `port_visit`; default is `4` (highest confidence). Only change this if the user explicitly requests lower confidence levels.
+- `--encounter-types` is only valid for `encounter`; default is `CARRIER-FISHING SUPPORT-FISHING`. Only change this if the user explicitly requests other types.
+- Use `--offset` and `--limit` to paginate through large result sets.
+
 #### events-stats
+
+Compute aggregate statistics for events over a date range. Optionally filter by region and group results by flag state or gear type.
 
 ```bash
 npx @globalfishingwatch/mcp events-stats --event-type <fishing|encounter|port_visit|loitering>
@@ -128,32 +157,55 @@ npx @globalfishingwatch/mcp events-stats --event-type <fishing|encounter|port_vi
 | `--confidence` | `2`, `3`, `4` (one or more; port_visit only; default `4`) |
 | `--encounter-types` | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
 
+**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[] }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag state or gear type and `value` is the event count.
+
+**When to use:** When you need aggregate counts, rankings by flag or gear type, or a summary of how many events/vessels are involved — without needing individual event details. Use `vessel-events` when you need the actual events.
+
+**Notes:**
+- `--group-by` defaults to `FLAG`. Use `GEARTYPE` to break down by fishing method.
+- `--region-type` and `--region-id` must always be provided together.
+- Same `--confidence` and `--encounter-types` restrictions as `vessel-events`.
+
 #### region-id-lookup
+
+Resolve a human-readable MPA, EEZ, or RFMO name to its canonical region ID. Uses word-overlap matching (case-insensitive).
 
 ```bash
 npx @globalfishingwatch/mcp region-id-lookup --region-type <MPA|EEZ|RFMO> --query <name> [--limit <n>]
 ```
-
-Use this before `vessel-report` or `vessel-events` when you only know the human-readable name of a region.
 
 | Parameter | Format / values |
 |-----------|----------------|
 | `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
 | `--limit` | 1–20 (default 5) |
 
+**Returns:** `{ regionType, query, limit, matches[] }` — each match includes `id`, `name`, `country` (ISO 3166-1 alpha-3, if available), and `source`.
+
+**When to use:** Always run this first when you only have the human-readable name of a region and need to call `vessel-report`, `vessel-events`, or `events-stats` with a `regionId`.
+
+**Notes:**
+- If more than one match is returned, ask the user which region they meant before proceeding.
+- The `id` from a match is what you pass as `--region-id` in other commands.
+
 #### region-geometry
+
+Returns the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO. No API token required to fetch the geometry itself.
 
 ```bash
 npx @globalfishingwatch/mcp region-geometry --region-type <MPA|EEZ|RFMO> --id <id>
 ```
 
-Returns the URL to fetch the GeoJSON geometry of the region (no API token required).
-
 | Parameter | Format / values |
 |-----------|----------------|
 | `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
 
+**Returns:** `{ regionType, id, url }` — the `url` is the endpoint from which you can fetch the region's GeoJSON geometry directly (no authentication required).
+
+**When to use:** When the user wants to visualize or programmatically use the geographic boundary of a region. Run `region-id-lookup` first to obtain the `--id` if you only have the region name.
+
 #### vessel-report
+
+Calculate fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Optionally filter by flag, gear type, vessel type, or speed, and group results by vessel, flag, or gear type.
 
 > **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
@@ -181,6 +233,21 @@ Date range must not exceed 1 year.
 | `--speeds` | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only) |
 | `--group-by` | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`) |
 
+**Returns:** `{ regionType, regionId, dateRange, fishingHours, gfwMapUrl }` plus:
+- `topVessels` (top 10 by hours, each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `hours`) — only when `--group-by VESSEL_ID`.
+- `rows` (aggregated and sorted descending by hours) — only when `--group-by FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
+- Applied filters (`flags`, `vesselTypes`, `speeds`, `geartypes`) echoed back when provided.
+
+**When to use:**
+- Use `--type FISHING` (default) for questions about fishing activity, fishing pressure, or fishing hours inside a region. Based on AIS movement patterns classified as fishing.
+- Use `--type PRESENCE` for questions about vessel traffic, vessel transit, or total time any vessel spent in the area, regardless of whether they were fishing.
+
+**Notes:**
+- Run `region-id-lookup` first if you only have the region name.
+- `gfwMapUrl` must always be shown to the user in full — never truncate or shorten it.
+- `--geartypes` and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `--type FISHING`.
+- `--vessel-types` and `--speeds` are only valid with `--type PRESENCE`.
+
 ### Output
 
 All commands output JSON to stdout. Pipe to `jq` for filtering:
@@ -197,15 +264,93 @@ npx @globalfishingwatch/mcp vessel-report --region-type EEZ --region-id 8386 \
 
 When used as an MCP server, the same capabilities are available as tools:
 
-| Tool               | Description                                                                                                                                                    |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vessel-search`    | Search vessels by name, MMSI, IMO, callsign, flag, or gear type                                                                                                |
-| `vessel-by-id`     | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata and a map URL                                                                               |
-| `vessel-events`    | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                   |
-| `events-stats`     | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type  |
-| `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                        |
-| `region-geometry`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                      |
-| `vessel-report`    | Calculate fishing or presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
+### vessel-search
+
+**Purpose:** Search vessels by name, MMSI, IMO, callsign, flag state, or activity date range. At least one filter must be provided.
+
+**Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, and `mapUrl` (link to the vessel's profile on the GFW map — always show it to the user).
+
+**When to use:** When you have partial vessel information and need to find a vessel or a list of vessels. Prefer `vessel-by-id` if you already have the GFW vessel ID.
+
+---
+
+### vessel-by-id
+
+**Purpose:** Retrieve one or more full vessel profiles by their GFW vessel IDs.
+
+**Returns:** `{ total, results[] }` — same fields as `vessel-search` results, including `mapUrl`.
+
+**When to use:** When you already know the GFW vessel ID(s) and want to skip a search query.
+
+---
+
+### vessel-events
+
+**Purpose:** Retrieve individual fishing, encounter, port visit, or loitering events. Filter by event type, date range, vessel ID, region, confidence (port visits), and encounter type.
+
+**Returns:** `{ total, limit, offset, nextOffset, entries[], mapUrl }` — each entry includes `id`, `type`, `start`, `end`, `lat`, `lon`, `vesselId`, and `regions` (arrays of intersecting MPA, EEZ, RFMO, and FAO IDs). Port visit events additionally include a `port` object; encounter events additionally include an `encounteredVessel` object. `mapUrl` links to the vessel's GFW profile for the queried period.
+
+**When to use:** When you need individual event details (exact time, position, involved vessels, ports). For aggregate counts use `events-stats`. Results are sorted by start date descending.
+
+**Key constraints:**
+- `confidence` only valid for `port_visit` (default `[4]`); only change if the user asks.
+- `encounterTypes` only valid for `encounter` (default `CARRIER-FISHING`, `SUPPORT-FISHING`); only change if the user asks.
+- `regionType` and `regionId` must always be provided together.
+
+---
+
+### events-stats
+
+**Purpose:** Compute aggregate statistics for events (fishing, encounters, port visits, loitering) over a date range. Optionally filter by region and group by flag state or gear type.
+
+**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[] }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag or gear type and `value` is the event count.
+
+**When to use:** When you need aggregate numbers, rankings by flag or gear type, or a summary of how many events/vessels are involved — without needing individual event records.
+
+**Key constraints:** Same `confidence` and `encounterTypes` restrictions as `vessel-events`. `regionType` and `regionId` must always be provided together.
+
+---
+
+### region-id-lookup
+
+**Purpose:** Resolve a human-readable MPA, EEZ, or RFMO name to its canonical region ID using word-overlap matching.
+
+**Returns:** `{ regionType, query, limit, matches[] }` — each match includes `id`, `name`, `country` (ISO 3166-1 alpha-3 if available), and `source`.
+
+**When to use:** Always run this first when you only have the region name and need to call `vessel-report`, `vessel-events`, or `events-stats` with a `regionId`. If multiple matches are returned, ask the user which one they meant before proceeding.
+
+---
+
+### region-geometry
+
+**Purpose:** Returns the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO. No API token is required to call that URL.
+
+**Returns:** `{ regionType, id, url }` — `url` is the endpoint from which the GeoJSON can be fetched directly.
+
+**When to use:** When the user wants to visualize or programmatically use the geographic boundary of a region. Run `region-id-lookup` first to obtain the region ID.
+
+---
+
+### vessel-report
+
+**Purpose:** Calculate total fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
+
+**Returns:** `{ regionType, regionId, dateRange, fishingHours, gfwMapUrl }` plus:
+- `topVessels` (top 10 by hours, with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `hours`) — only when `groupBy` is `VESSEL_ID`.
+- `rows` (aggregated entries sorted descending by hours, with grouping fields + `hours`) — only when `groupBy` is `FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
+- Applied filters echoed back when provided.
+
+**When to use:**
+- Use `type: FISHING` (default) for questions about fishing activity or fishing pressure: hours when vessels were classified as actively fishing.
+- Use `type: PRESENCE` for questions about vessel traffic or transit: hours when any vessel was inside the region regardless of activity.
+
+**Key constraints:**
+- **Never call in parallel.** If multiple reports are needed, call them sequentially.
+- Date range cannot exceed 1 year.
+- `geartypes` filter and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `type: FISHING`.
+- `vesselTypes` and `speeds` filters are only valid with `type: PRESENCE`.
+- `gfwMapUrl` must always be shown to the user in full — never truncate, shorten, or summarize it.
+- Run `region-id-lookup` first if you only have the human-readable region name.
 
 ---
 
