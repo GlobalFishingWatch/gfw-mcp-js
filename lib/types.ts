@@ -94,6 +94,16 @@ export type EventsResponse = {
   entries: EventEntry[];
 };
 
+export type EventsStatsResponse = {
+  flags: string[];
+  numEvents: number;
+  numFlags: number;
+  numVessels: number;
+  groups: { name: string; value: number }[];
+  /** GFW map URL to visualise the queried events. Null when eventType is "fishing". */
+  mapUrl?: string | null;
+};
+
 export type FishingEffortEntry = {
   callsign: string;
   dataset: string;

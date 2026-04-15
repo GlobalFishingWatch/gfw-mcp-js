@@ -94,6 +94,56 @@ export function generateVesselProfileUrl(
   return `${GFW_BASE_URL}${baseUrl}${dynamicPath}`;
 }
 
+export function createStatsMapUrl(
+  start: string,
+  end: string,
+  eventType: string,
+  regionType?: keyof typeof REGION_DATASETS,
+  regionId?: string,
+): string | null {
+  if (eventType === 'fishing') {
+    return null;
+  }
+  const baseUrl = '/vessel';
+
+  let dynamicPath = `/reports/default-public/report`;
+  if (regionType && regionId) {
+    dynamicPath += `/${REGION_DATASETS[regionType]}/${regionId}`;
+  }
+  if (start && end) {
+    dynamicPath += `&start=${start}&end=${end}`;
+  }
+  const dataviewInstances = stringify(
+    { dvIn: [
+      {
+        "id": "encounters",
+        "origin": "report",
+        "config": {
+          "visible": eventType === 'encounter' 
+        }
+      },
+      {
+        "id": "loitering",
+        "origin": "report",
+        "config": {
+          "visible": eventType === 'loitering' 
+        }
+      },
+      {
+        "id": "port-visits",
+        "origin": "report",
+        "config": {
+          "visible": eventType === 'port_visit' 
+        }
+      }
+    ] },
+    { arrayFormat: 'indices' },
+  );
+  dynamicPath += `&${dataviewInstances}`;
+
+  return `${GFW_BASE_URL}${baseUrl}${dynamicPath}`;
+}
+
 export function generatePortReportUrl(portId: string): string {
   return `${GFW_BASE_URL}/fishing-activity/default-public/ports-report/${portId}?portsReportDatasetId=public-global-port-visits-events:latest`;
 }

@@ -2,7 +2,12 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
-import { EventsResponse, REGION_DATASETS } from '../lib/types.js';
+import {
+  EventsResponse,
+  EventsStatsResponse,
+  REGION_DATASETS,
+} from '../lib/types.js';
+import { createStatsMapUrl } from '../lib/map-url-generator.js';
 
 const datasetsByType = {
   fishing: 'public-global-fishing-events:latest',
@@ -27,7 +32,13 @@ export async function eventsStats({
   startDate: string;
   endDate: string;
   confidence?: number[];
-  encounterTypes?: ('CARRIER-FISHING' | 'CARRIER-BUNKER' | 'FISHING-BUNKER' | 'FISHING-FISHING' | 'SUPPORT-FISHING')[];
+  encounterTypes?: (
+    | 'CARRIER-FISHING'
+    | 'CARRIER-BUNKER'
+    | 'FISHING-BUNKER'
+    | 'FISHING-FISHING'
+    | 'SUPPORT-FISHING'
+  )[];
   regionType?: 'MPA' | 'EEZ' | 'RFMO';
   regionId?: string;
   groupBy?: 'FLAG' | 'GEARTYPE';
@@ -80,7 +91,10 @@ export async function eventsStats({
   }
 
   if (eventType === 'encounter') {
-    const encounterTypeList = encounterTypes ?? ['CARRIER-FISHING', 'SUPPORT-FISHING'];
+    const encounterTypeList = encounterTypes ?? [
+      'CARRIER-FISHING',
+      'SUPPORT-FISHING',
+    ];
     const expanded: string[] = [];
     for (const v of encounterTypeList) {
       expanded.push(v);
@@ -94,7 +108,15 @@ export async function eventsStats({
   }
 
   const response = await gfwFetch('/v3/events/stats', params);
-  const data: EventsResponse = await response.json();
+  const data: EventsStatsResponse = await response.json();
+  // TODO: take in account filters
+  data.mapUrl = createStatsMapUrl(
+    startDate,
+    endDate,
+    eventType,
+    regionType,
+    regionId,
+  );
   return data;
 }
 
@@ -104,7 +126,7 @@ export function register(server: McpServer) {
     {
       title: 'Events Statistics',
       description:
-        'Compute aggregate statistics for events (fishing, encounters, port visits, loitering) over a date range. Optionally filter by region (MPA, EEZ, RFMO) and group results by flag or gear type. Returns total event count, unique flags, unique vessels, and grouped counts.',
+        'Compute aggregate statistics for events (fishing, encounters, port visits, loitering) over a date range. Optionally filter by region (MPA, EEZ, RFMO) and group results by flag or gear type. Returns total event count, unique flags, unique vessels, grouped counts, and a GFW map URL to visualise the results (not available for fishing events).',
       inputSchema: {
         eventType: z
           .enum(['fishing', 'encounter', 'port_visit', 'loitering'])
@@ -184,12 +206,22 @@ export function register(server: McpServer) {
           .describe(
             'Counts grouped by the chosen groupBy dimension, sorted descending by value. Empty when groupBy is not specified.',
           ),
+        mapUrl: z
+          .string()
+          .nullable()
+          .optional()
+          .describe(
+            'GFW map URL to visualise the queried events. Not present when eventType is "fishing".',
+          ),
       },
     },
     async (params) => {
       try {
         const data = await eventsStats(params);
-        return createToolResponse(JSON.stringify(data, null, 2), data as Record<string, unknown>);
+        return createToolResponse(
+          JSON.stringify(data, null, 2),
+          data as Record<string, unknown>,
+        );
       } catch (err) {
         return createErrorResponse(
           `Failed to compute event statistics: ${err instanceof Error ? err.message : String(err)}`,

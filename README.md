@@ -164,7 +164,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | `vessel-search`    | Search vessels by name, MMSI, IMO, callsign, flag, or gear type                                                                                                |
 | `vessel-by-id`     | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata and a map URL                                                                               |
 | `vessel-events`    | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                   |
-| `events-stats`     | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type  |
+| `events-stats`     | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events) |
 | `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                        |
 | `region-geometry`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                      |
 | `area-report`      | Calculate fishing or presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
@@ -305,6 +305,8 @@ npx @globalfishingwatch/gfw-cli events-stats --event-type fishing --start-date 2
 npx @globalfishingwatch/gfw-cli events-stats --event-type fishing --start-date 2024-01-01 --end-date 2024-12-31 --group-by GEARTYPE
 npx @globalfishingwatch/gfw-cli events-stats --event-type encounter --start-date 2024-01-01 --end-date 2024-12-31 --region-type RFMO --region-id WCPFC
 ```
+
+**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[], mapUrl }` — `groups` contains `{ name, value }` pairs sorted descending by count. `mapUrl` links to the GFW map to visualise the queried events; it is **not present** when `--event-type` is `fishing`.
 
 #### `region-id-lookup`
 

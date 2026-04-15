@@ -163,7 +163,7 @@ npx @globalfishingwatch/gfw-cli events-stats --event-type <fishing|encounter|por
 | `--confidence`                | `2`, `3`, `4` (one or more; port_visit only; default `4`)                                                                                                       |
 | `--encounter-types`           | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
 
-**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[] }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag state or gear type and `value` is the event count.
+**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[], mapUrl }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag state or gear type and `value` is the event count. `mapUrl` links to the GFW map to visualise the queried events; it is **not present** when `--event-type` is `fishing`.
 
 **When to use:** When you need aggregate counts, rankings by flag or gear type, or a summary of how many events/vessels are involved — without needing individual event details. Use `vessel-events` when you need the actual events.
 
@@ -172,6 +172,7 @@ npx @globalfishingwatch/gfw-cli events-stats --event-type <fishing|encounter|por
 - `--group-by` defaults to `FLAG`. Use `GEARTYPE` to break down by fishing method.
 - `--region-type` and `--region-id` must always be provided together.
 - Same `--confidence` and `--encounter-types` restrictions as `vessel-events`.
+- `mapUrl` is only present for `encounter`, `port_visit`, and `loitering` event types — always show it to the user when available.
 
 #### region-id-lookup
 
@@ -315,11 +316,11 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Compute aggregate statistics for events (fishing, encounters, port visits, loitering) over a date range. Optionally filter by region and group by flag state or gear type.
 
-**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[] }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag or gear type and `value` is the event count.
+**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[], mapUrl }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag or gear type and `value` is the event count. `mapUrl` links to the GFW map to visualise the queried events; it is **not present** when `eventType` is `fishing`.
 
 **When to use:** When you need aggregate numbers, rankings by flag or gear type, or a summary of how many events/vessels are involved — without needing individual event records.
 
-**Key constraints:** Same `confidence` and `encounterTypes` restrictions as `vessel-events`. `regionType` and `regionId` must always be provided together.
+**Key constraints:** Same `confidence` and `encounterTypes` restrictions as `vessel-events`. `regionType` and `regionId` must always be provided together. Always show `mapUrl` to the user when it is present.
 
 ---
 
