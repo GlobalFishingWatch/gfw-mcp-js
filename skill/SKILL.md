@@ -25,6 +25,10 @@ When using this skill, the agent must follow these rules:
 - **Disclose assumed parameters:** If you choose a value for any parameter on your own (date ranges, vessel types, gear types, confidence levels, etc.), explicitly tell the user what you assumed and why before or alongside the result.
 - **Never alter URLs:** Return all URLs exactly as the tool provides them — do not shorten, truncate, reformat, or paraphrase them. The user must be able to open them directly.
 - **Always show URLs:** Every URL present in any tool response must be shown to the user, without exception. Never omit, hide, or summarize a URL. Display each one as a clickable link on its own line.
+- **Include screenshots when a map URL is available:** Whenever a tool returns a `mapUrl` or `gfwMapUrl`, generate a screenshot of that URL using the script at `scripts/screenshot_gfw.js` and embed the image in your response. The script requires the `playwright` Node.js package — if it is not installed, run `npm install playwright && npx playwright install chromium` first. Then run `node scripts/screenshot_gfw.js <url> <output_path>`, choosing a descriptive output path (e.g. `/tmp/gfw_vessel_<vesselId>.png`). After the screenshot is saved, embed it in your response using `![description](path/to/screenshot.png)`. Always include the screenshot alongside the URL — never instead of it.
+- **Never run multiple reports in parallel:** If you need to calculate multiple `vessel-report`s, run them sequentially — one at a time, waiting for each to complete before starting the next.
+- **When in doubt, ask the user:** If you are unsure about any parameter value, filter, or option to use, ask the user for clarification before proceeding. Do not make assumptions without confirming them with the user first.
+- **Use `vessel-by-id` when you have a GFW vessel ID:** If you already have the GFW vessel ID, use the `vessel-by-id` tool to fetch the full vessel profile directly, instead of using `vessel-search`.
 
 ---
 
@@ -75,21 +79,22 @@ npx @globalfishingwatch/mcp vessel-search [--name <name>] [--mmsi <mmsi>] [--imo
   [--active-to <YYYY-MM-DD>] [--limit <n>]
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
-| `--mmsi` | 9-digit string |
-| `--imo` | 7-digit string |
-| `--flag` | ISO 3166-1 alpha-3 code (e.g. `ESP`, `CHN`, `USA`) |
-| `--active-from` / `--active-to` | `YYYY-MM-DD` |
-| `--limit` | 1–50 (default 10) |
+| Parameter                       | Format / values                                    |
+| ------------------------------- | -------------------------------------------------- |
+| `--mmsi`                        | 9-digit string                                     |
+| `--imo`                         | 7-digit string                                     |
+| `--flag`                        | ISO 3166-1 alpha-3 code (e.g. `ESP`, `CHN`, `USA`) |
+| `--active-from` / `--active-to` | `YYYY-MM-DD`                                       |
+| `--limit`                       | 1–50 (default 10)                                  |
 
 **Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, and `mapUrl`.
 
 **When to use:** When you have partial vessel information (name, identifiers, flag state) and need to find a vessel or a list of vessels. Use `vessel-by-id` instead if you already have the GFW vessel ID.
 
 **Notes:**
+
 - `mapUrl` links directly to the vessel's profile on the GFW map — always show it to the user.
-- `--active-to` is exclusive (vessels active *before* that date are included).
+- `--active-to` is exclusive (vessels active _before_ that date are included).
 
 #### vessel-by-id
 
@@ -116,20 +121,21 @@ npx @globalfishingwatch/mcp vessel-events --event-type <fishing|encounter|port_v
   [--region-type <MPA|EEZ|RFMO>] [--region-id <id>]
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
-| `--event-type` | `fishing` \| `encounter` \| `port_visit` \| `loitering` |
-| `--start-date` / `--end-date` | `YYYY-MM-DD` |
-| `--limit` | 1–100 (default 20) |
-| `--confidence` | `2`, `3`, `4` (one or more; port_visit only; default `4`) |
-| `--encounter-types` | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
-| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
+| Parameter                     | Format / values                                                                                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--event-type`                | `fishing` \| `encounter` \| `port_visit` \| `loitering`                                                                                                         |
+| `--start-date` / `--end-date` | `YYYY-MM-DD`                                                                                                                                                    |
+| `--limit`                     | 1–100 (default 20)                                                                                                                                              |
+| `--confidence`                | `2`, `3`, `4` (one or more; port_visit only; default `4`)                                                                                                       |
+| `--encounter-types`           | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                        |
 
 **Returns:** `{ total, limit, offset, nextOffset, entries[], mapUrl }` — each entry includes `id`, `type`, `start`, `end`, `lat`, `lon`, `vesselId`, and `regions` (lists of intersecting MPA, EEZ, RFMO, and FAO IDs). Port visit events additionally include a `port` object (`name`, `id`, `flag`); encounter events additionally include an `encounteredVessel` object (`name`, `id`, `flag`, `ssvid`). `mapUrl` links to the vessel's profile on the GFW map for the queried period.
 
-**When to use:** When you need to see *individual* events (exact time, position, details) for a vessel or inside a region. Use `events-stats` instead when you only need aggregate counts or breakdowns.
+**When to use:** When you need to see _individual_ events (exact time, position, details) for a vessel or inside a region. Use `events-stats` instead when you only need aggregate counts or breakdowns.
 
 **Notes:**
+
 - Results are sorted by start date descending (most recent first).
 - `--region-type` and `--region-id` must always be provided together.
 - `--confidence` is only valid for `port_visit`; default is `4` (highest confidence). Only change this if the user explicitly requests lower confidence levels.
@@ -148,20 +154,21 @@ npx @globalfishingwatch/mcp events-stats --event-type <fishing|encounter|port_vi
   [--confidence <levels> ...] [--encounter-types <types> ...]
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
-| `--event-type` | `fishing` \| `encounter` \| `port_visit` \| `loitering` |
-| `--start-date` / `--end-date` | `YYYY-MM-DD` |
-| `--group-by` | `FLAG` \| `GEARTYPE` (default `FLAG`) |
-| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
-| `--confidence` | `2`, `3`, `4` (one or more; port_visit only; default `4`) |
-| `--encounter-types` | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
+| Parameter                     | Format / values                                                                                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--event-type`                | `fishing` \| `encounter` \| `port_visit` \| `loitering`                                                                                                         |
+| `--start-date` / `--end-date` | `YYYY-MM-DD`                                                                                                                                                    |
+| `--group-by`                  | `FLAG` \| `GEARTYPE` (default `FLAG`)                                                                                                                           |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                        |
+| `--confidence`                | `2`, `3`, `4` (one or more; port_visit only; default `4`)                                                                                                       |
+| `--encounter-types`           | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
 
 **Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[] }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag state or gear type and `value` is the event count.
 
 **When to use:** When you need aggregate counts, rankings by flag or gear type, or a summary of how many events/vessels are involved — without needing individual event details. Use `vessel-events` when you need the actual events.
 
 **Notes:**
+
 - `--group-by` defaults to `FLAG`. Use `GEARTYPE` to break down by fishing method.
 - `--region-type` and `--region-id` must always be provided together.
 - Same `--confidence` and `--encounter-types` restrictions as `vessel-events`.
@@ -174,16 +181,17 @@ Resolve a human-readable MPA, EEZ, or RFMO name to its canonical region ID. Uses
 npx @globalfishingwatch/mcp region-id-lookup --region-type <MPA|EEZ|RFMO> --query <name> [--limit <n>]
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
+| Parameter       | Format / values          |
+| --------------- | ------------------------ |
 | `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
-| `--limit` | 1–20 (default 5) |
+| `--limit`       | 1–20 (default 5)         |
 
 **Returns:** `{ regionType, query, limit, matches[] }` — each match includes `id`, `name`, `country` (ISO 3166-1 alpha-3, if available), and `source`.
 
 **When to use:** Always run this first when you only have the human-readable name of a region and need to call `vessel-report`, `vessel-events`, or `events-stats` with a `regionId`.
 
 **Notes:**
+
 - If more than one match is returned, ask the user which region they meant before proceeding.
 - The `id` from a match is what you pass as `--region-id` in other commands.
 
@@ -195,8 +203,8 @@ Returns the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO. N
 npx @globalfishingwatch/mcp region-geometry --region-type <MPA|EEZ|RFMO> --id <id>
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
+| Parameter       | Format / values          |
+| --------------- | ------------------------ |
 | `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
 
 **Returns:** `{ regionType, id, url }` — the `url` is the endpoint from which you can fetch the region's GeoJSON geometry directly (no authentication required).
@@ -222,27 +230,30 @@ npx @globalfishingwatch/mcp vessel-report --region-type <MPA|EEZ|RFMO> --region-
 
 Date range must not exceed 1 year.
 
-| Parameter | Format / values |
-|-----------|----------------|
-| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
-| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year) |
-| `--type` | `FISHING` (default) \| `PRESENCE` |
-| `--flags` | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10 |
-| `--geartypes` | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING only) |
-| `--vessel-types` | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only) |
-| `--speeds` | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only) |
-| `--group-by` | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`) |
+| Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                         |
+| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                 |
+| `--type`                      | `FISHING` (default) \| `PRESENCE`                                                                                                                                                                                                                                                                                                                |
+| `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                           |
+| `--geartypes`                 | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING only) |
+| `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                              |
+| `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                          |
+| `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`)                                                                                                                                                                                                               |
 
 **Returns:** `{ regionType, regionId, dateRange, fishingHours, gfwMapUrl }` plus:
+
 - `topVessels` (top 10 by hours, each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `hours`) — only when `--group-by VESSEL_ID`.
 - `rows` (aggregated and sorted descending by hours) — only when `--group-by FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
 - Applied filters (`flags`, `vesselTypes`, `speeds`, `geartypes`) echoed back when provided.
 
 **When to use:**
+
 - Use `--type FISHING` (default) for questions about fishing activity, fishing pressure, or fishing hours inside a region. Based on AIS movement patterns classified as fishing.
 - Use `--type PRESENCE` for questions about vessel traffic, vessel transit, or total time any vessel spent in the area, regardless of whether they were fishing.
 
 **Notes:**
+
 - Run `region-id-lookup` first if you only have the region name.
 - `gfwMapUrl` must always be shown to the user in full — never truncate or shorten it.
 - `--geartypes` and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `--type FISHING`.
@@ -293,6 +304,7 @@ When used as an MCP server, the same capabilities are available as tools:
 **When to use:** When you need individual event details (exact time, position, involved vessels, ports). For aggregate counts use `events-stats`. Results are sorted by start date descending.
 
 **Key constraints:**
+
 - `confidence` only valid for `port_visit` (default `[4]`); only change if the user asks.
 - `encounterTypes` only valid for `encounter` (default `CARRIER-FISHING`, `SUPPORT-FISHING`); only change if the user asks.
 - `regionType` and `regionId` must always be provided together.
@@ -336,15 +348,18 @@ When used as an MCP server, the same capabilities are available as tools:
 **Purpose:** Calculate total fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
 
 **Returns:** `{ regionType, regionId, dateRange, fishingHours, gfwMapUrl }` plus:
+
 - `topVessels` (top 10 by hours, with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `hours`) — only when `groupBy` is `VESSEL_ID`.
 - `rows` (aggregated entries sorted descending by hours, with grouping fields + `hours`) — only when `groupBy` is `FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
 - Applied filters echoed back when provided.
 
 **When to use:**
+
 - Use `type: FISHING` (default) for questions about fishing activity or fishing pressure: hours when vessels were classified as actively fishing.
 - Use `type: PRESENCE` for questions about vessel traffic or transit: hours when any vessel was inside the region regardless of activity.
 
 **Key constraints:**
+
 - **Never call in parallel.** If multiple reports are needed, call them sequentially.
 - Date range cannot exceed 1 year.
 - `geartypes` filter and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `type: FISHING`.

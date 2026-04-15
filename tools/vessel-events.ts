@@ -34,7 +34,13 @@ export async function vesselEvents({
   limit?: number;
   offset?: number;
   confidence?: number[];
-  encounterTypes?: ('CARRIER-FISHING' | 'CARRIER-BUNKER' | 'FISHING-BUNKER' | 'FISHING-FISHING' | 'SUPPORT-FISHING')[];
+  encounterTypes?: (
+    | 'CARRIER-FISHING'
+    | 'CARRIER-BUNKER'
+    | 'FISHING-BUNKER'
+    | 'FISHING-FISHING'
+    | 'SUPPORT-FISHING'
+  )[];
   regionType?: 'MPA' | 'EEZ' | 'RFMO';
   regionId?: string;
 }) {
@@ -85,7 +91,13 @@ export async function vesselEvents({
     });
   }
   if (eventType === 'encounter') {
-    const encounterTypeList = encounterTypes ?? ['CARRIER-FISHING', 'SUPPORT-FISHING'];
+    const encounterTypeList = encounterTypes ?? [
+      'CARRIER-FISHING',
+      'CARRIER-BUNKER',
+      'FISHING-BUNKER',
+      'FISHING-FISHING',
+      'SUPPORT-FISHING',
+    ];
     const expanded: string[] = [];
     for (const v of encounterTypeList) {
       expanded.push(v);
@@ -293,7 +305,10 @@ export function register(server: McpServer) {
     async (params) => {
       try {
         const output = await vesselEvents(params);
-        return createToolResponse(JSON.stringify(output, null, 2), output as Record<string, unknown>);
+        return createToolResponse(
+          JSON.stringify(output, null, 2),
+          output as Record<string, unknown>,
+        );
       } catch (err) {
         return createErrorResponse(
           `Failed to fetch vessel events: ${err instanceof Error ? err.message : String(err)}`,
