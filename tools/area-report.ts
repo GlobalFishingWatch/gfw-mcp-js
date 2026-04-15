@@ -11,7 +11,7 @@ import {
   ReportResponse,
 } from '../lib/types.js';
 
-export async function vesselReport({
+export async function areaReport({
   regionType,
   regionId,
   startDate,
@@ -146,7 +146,7 @@ export async function vesselReport({
 
 export function register(server: McpServer) {
   server.registerTool(
-    'vessel-report',
+    'area-report',
     {
       title: 'Activity Hours Calculator',
       description:
@@ -318,7 +318,7 @@ export function register(server: McpServer) {
     },
     async (params) => {
       try {
-        const output = await vesselReport(params);
+        const output = await areaReport(params);
         if ('isError' in output) return output;
         const flagText = output.flags && output.flags.length > 0 ? `\nFlag Filters: ${output.flags.join(', ')}` : '';
         const activityType = params.type ?? 'FISHING';

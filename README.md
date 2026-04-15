@@ -167,7 +167,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | `events-stats`     | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type  |
 | `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                        |
 | `region-geometry`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                      |
-| `vessel-report`    | Calculate fishing or presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
+| `area-report`      | Calculate fishing or presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
 
 ---
 
@@ -314,7 +314,7 @@ Resolve an MPA, EEZ, or RFMO name to its canonical ID.
 npx @globalfishingwatch/gfw-cli region-id-lookup --region-type <MPA|EEZ|RFMO> --query <name> [--limit <n>]
 ```
 
-Use this before `vessel-report` or `vessel-events` when you only know the human-readable name of a region.
+Use this before `area-report` or `vessel-events` when you only know the human-readable name of a region.
 
 | Parameter       | Format / values          |
 | --------------- | ------------------------ |
@@ -344,14 +344,14 @@ npx @globalfishingwatch/gfw-cli region-geometry --region-type EEZ --id 8386
 npx @globalfishingwatch/gfw-cli region-geometry --region-type MPA --id 12345
 ```
 
-#### `vessel-report`
+#### `area-report`
 
 Calculate fishing or presence hours inside a region. Date range must not exceed 1 year.
 
 > **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
 ```bash
-npx @globalfishingwatch/gfw-cli vessel-report --region-type <MPA|EEZ|RFMO> --region-id <id>
+npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --region-id <id>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
   [--type <FISHING|PRESENCE>]
   [--flags <ISO3> ...]
@@ -373,10 +373,10 @@ npx @globalfishingwatch/gfw-cli vessel-report --region-type <MPA|EEZ|RFMO> --reg
 | `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`)                                                                                                                                                                                                               |
 
 ```bash
-npx @globalfishingwatch/gfw-cli vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31
-npx @globalfishingwatch/gfw-cli vessel-report --region-type MPA --region-id 12345 --start-date 2024-01-01 --end-date 2024-12-31 --flags CHN ESP
-npx @globalfishingwatch/gfw-cli vessel-report --region-type RFMO --region-id WCPFC --start-date 2024-01-01 --end-date 2024-12-31 --type FISHING --group-by FLAG
-npx @globalfishingwatch/gfw-cli vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE --vessel-types fishing cargo
+npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31
+npx @globalfishingwatch/gfw-cli area-report --region-type MPA --region-id 12345 --start-date 2024-01-01 --end-date 2024-12-31 --flags CHN ESP
+npx @globalfishingwatch/gfw-cli area-report --region-type RFMO --region-id WCPFC --start-date 2024-01-01 --end-date 2024-12-31 --type FISHING --group-by FLAG
+npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE --vessel-types fishing cargo
 ```
 
 ### Output
@@ -385,7 +385,7 @@ All commands output JSON to stdout, ready to pipe to `jq`:
 
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-search --name "Maria" | jq '.results[].name'
-npx @globalfishingwatch/gfw-cli vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 | jq '.fishingHours'
+npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 | jq '.fishingHours'
 ```
 
 ---

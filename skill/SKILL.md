@@ -26,7 +26,7 @@ When using this skill, the agent must follow these rules:
 - **Never alter URLs:** Return all URLs exactly as the tool provides them — do not shorten, truncate, reformat, or paraphrase them. The user must be able to open them directly.
 - **Always show URLs:** Every URL present in any tool response must be shown to the user, without exception. Never omit, hide, or summarize a URL. Display each one as a clickable link on its own line.
 - **Include screenshots when a map URL is available:** Whenever a tool returns a `mapUrl` or `gfwMapUrl`, generate a screenshot of that URL using the script at `scripts/screenshot_gfw.js` and embed the image in your response. The script requires the `playwright` Node.js package — if it is not installed, run `npm install playwright && npx playwright install chromium` first. Then run `node scripts/screenshot_gfw.js <url> <output_path>`, choosing a descriptive output path (e.g. `/tmp/gfw_vessel_<vesselId>.png`). After the screenshot is saved, embed it in your response using `![description](path/to/screenshot.png)`. Always include the screenshot alongside the URL — never instead of it.
-- **Never run multiple reports in parallel:** If you need to calculate multiple `vessel-report`s, run them sequentially — one at a time, waiting for each to complete before starting the next.
+- **Never run multiple reports in parallel:** If you need to calculate multiple `area-report`s, run them sequentially — one at a time, waiting for each to complete before starting the next.
 - **When in doubt, ask the user:** If you are unsure about any parameter value, filter, or option to use, ask the user for clarification before proceeding. Do not make assumptions without confirming them with the user first.
 - **Use `vessel-by-id` when you have a GFW vessel ID:** If you already have the GFW vessel ID, use the `vessel-by-id` tool to fetch the full vessel profile directly, instead of using `vessel-search`.
 
@@ -188,7 +188,7 @@ npx @globalfishingwatch/gfw-cli region-id-lookup --region-type <MPA|EEZ|RFMO> --
 
 **Returns:** `{ regionType, query, limit, matches[] }` — each match includes `id`, `name`, `country` (ISO 3166-1 alpha-3, if available), and `source`.
 
-**When to use:** Always run this first when you only have the human-readable name of a region and need to call `vessel-report`, `vessel-events`, or `events-stats` with a `regionId`.
+**When to use:** Always run this first when you only have the human-readable name of a region and need to call `area-report`, `vessel-events`, or `events-stats` with a `regionId`.
 
 **Notes:**
 
@@ -211,14 +211,14 @@ npx @globalfishingwatch/gfw-cli region-geometry --region-type <MPA|EEZ|RFMO> --i
 
 **When to use:** When the user wants to visualize or programmatically use the geographic boundary of a region. Run `region-id-lookup` first to obtain the `--id` if you only have the region name.
 
-#### vessel-report
+#### area-report
 
 Calculate fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Optionally filter by flag, gear type, vessel type, or speed, and group results by vessel, flag, or gear type.
 
 > **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
 ```bash
-npx @globalfishingwatch/gfw-cli vessel-report --region-type <MPA|EEZ|RFMO> --region-id <id>
+npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --region-id <id>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
   [--type <FISHING|PRESENCE>]
   [--flags <ISO3> ...]
@@ -265,7 +265,7 @@ All commands output JSON to stdout. Pipe to `jq` for filtering:
 
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-search --name "Maria" | jq '.results[].name'
-npx @globalfishingwatch/gfw-cli vessel-report --region-type EEZ --region-id 8386 \
+npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 \
   --start-date 2024-01-01 --end-date 2024-12-31 | jq '.fishingHours'
 ```
 
@@ -329,7 +329,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Returns:** `{ regionType, query, limit, matches[] }` — each match includes `id`, `name`, `country` (ISO 3166-1 alpha-3 if available), and `source`.
 
-**When to use:** Always run this first when you only have the region name and need to call `vessel-report`, `vessel-events`, or `events-stats` with a `regionId`. If multiple matches are returned, ask the user which one they meant before proceeding.
+**When to use:** Always run this first when you only have the region name and need to call `area-report`, `vessel-events`, or `events-stats` with a `regionId`. If multiple matches are returned, ask the user which one they meant before proceeding.
 
 ---
 
@@ -343,7 +343,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ---
 
-### vessel-report
+### area-report
 
 **Purpose:** Calculate total fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
 

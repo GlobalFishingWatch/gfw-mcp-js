@@ -7,7 +7,7 @@ import { vesselEvents } from '../tools/vessel-events.js';
 import { eventsStats } from '../tools/events-stats.js';
 import { regionIdLookup } from '../tools/region-id-lookup.js';
 import { regionGeometry } from '../tools/region-geometry.js';
-import { vesselReport } from '../tools/vessel-report.js';
+import { areaReport } from '../tools/area-report.js';
 
 function print(data: unknown) {
   console.log(JSON.stringify(data, null, 2));
@@ -220,9 +220,9 @@ program
     print(regionGeometry({ regionType: opts.regionType as any, id: opts.id }));
   });
 
-// ── vessel-report ─────────────────────────────────────────────────────────────
+// ── area-report ───────────────────────────────────────────────────────────────
 program
-  .command('vessel-report')
+  .command('area-report')
   .description('Calculate fishing or presence hours in a region')
   .requiredOption('--region-type <type>', 'Region type: MPA | EEZ | RFMO')
   .requiredOption('--region-id <id>', 'Canonical region ID')
@@ -242,7 +242,7 @@ program
   )
   .action((opts) =>
     run(() =>
-      vesselReport({
+      areaReport({
         regionType: opts.regionType as any,
         regionId: opts.regionId,
         startDate: opts.startDate,

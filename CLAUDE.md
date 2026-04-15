@@ -42,7 +42,7 @@ lib/response.ts     # createToolResponse() / createErrorResponse() helpers
 | `vessel-search` | [tools/vessel-search.ts](tools/vessel-search.ts) | Search vessels by name, MMSI, IMO, flag, gear type, date range |
 | `vessel-events` | [tools/vessel-events.ts](tools/vessel-events.ts) | Retrieve events (port visits, encounters, detections) for a vessel ID |
 | `region-id-lookup` | [tools/region-id-lookup.ts](tools/region-id-lookup.ts) | Resolve MPA or EEZ names to canonical region IDs |
-| `mpa-vessel-report` | [tools/mpa-vessel-report.ts](tools/mpa-vessel-report.ts) | Calculate fishing hours in a region; returns GFW map URL |
+| `area-report` | [tools/area-report.ts](tools/area-report.ts) | Calculate fishing or presence hours in a region; returns GFW map URL |
 
 All tools use **mock data** — real backend integration is marked with `// TODO` comments in each tool file.
 
