@@ -28,14 +28,14 @@ if (!url || !outPath) {
   try {
     await page.goto(url + '&screenshotMode=true', {
       waitUntil: 'networkidle',
-      timeout: 90000,
+      timeout: 180000,
     });
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(10000);
     const resolvedPath = path.resolve(outPath);
     await page.screenshot({
       path: resolvedPath,
       fullPage: false,
-      timeout: 90000,
+      timeout: 180000,
     });
     console.log(`Saved: ${resolvedPath}`);
   } catch (e) {
