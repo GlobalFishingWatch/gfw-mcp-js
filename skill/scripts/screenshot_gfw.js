@@ -32,7 +32,11 @@ if (!url || !outPath) {
     });
     await page.waitForTimeout(5000);
     const resolvedPath = path.resolve(outPath);
-    await page.screenshot({ path: resolvedPath, fullPage: false });
+    await page.screenshot({
+      path: resolvedPath,
+      fullPage: false,
+      timeout: 90000,
+    });
     console.log(`Saved: ${resolvedPath}`);
   } catch (e) {
     console.error(`Failed: ${e.message}`);

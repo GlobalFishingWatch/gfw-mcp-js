@@ -1,4 +1,5 @@
 import { fetch, ProxyAgent } from 'undici';
+import { resolveToken } from '../cli/auth';
 
 const GFW_BASE = 'https://gateway.api.globalfishingwatch.org';
 
@@ -20,7 +21,7 @@ export async function gfwFetch(
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   }
 
-  const apiKey = process.env.API_KEY;
+  const apiKey = resolveToken();
   console.error(`Making GFW API request to ${url}`);
   const response = await fetch(url.toString(), {
     headers: {

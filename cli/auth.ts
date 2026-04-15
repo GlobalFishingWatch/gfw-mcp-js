@@ -21,7 +21,9 @@ function readConfig(): Config | null {
 
 function writeConfig(config: Config): void {
   fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), {
+    mode: 0o600,
+  });
 }
 
 /**
@@ -31,7 +33,8 @@ function writeConfig(config: Config): void {
  * Throws if no token is found.
  */
 export function resolveToken(): string {
-  const token = process.env.GFW_TOKEN ?? process.env.API_KEY ?? readConfig()?.token;
+  const token =
+    process.env.GFW_TOKEN ?? process.env.API_KEY ?? readConfig()?.token;
   if (!token) {
     throw new Error(
       'No GFW API token configured.\n' +
@@ -42,7 +45,10 @@ export function resolveToken(): string {
 }
 
 export async function authLogin(): Promise<void> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
   const token = await new Promise<string>((resolve) => {
     rl.question(
       'Get your token at: https://globalfishingwatch.org/our-apis/tokens\nEnter your GFW API token: ',
@@ -74,7 +80,9 @@ export function authLogout(): void {
 export function authStatus(): void {
   const envToken = process.env.GFW_TOKEN ?? process.env.API_KEY;
   if (envToken) {
-    console.log(`Token source: env var (${process.env.GFW_TOKEN ? 'GFW_TOKEN' : 'API_KEY'})`);
+    console.log(
+      `Token source: env var (${process.env.GFW_TOKEN ? 'GFW_TOKEN' : 'API_KEY'})`,
+    );
     return;
   }
   const config = readConfig();

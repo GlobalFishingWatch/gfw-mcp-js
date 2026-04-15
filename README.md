@@ -1,4 +1,4 @@
-# @globalfishingwatch/mcp
+# @globalfishingwatch/gfw-cli
 
 Access [Global Fishing Watch](https://globalfishingwatch.org) data from any MCP-compatible AI assistant or directly from the terminal. Search vessels, retrieve fishing and port-visit events, look up Marine Protected Areas, Exclusive Economic Zones and RFMOs, calculate fishing activity hours within any region, and compute aggregate event statistics.
 
@@ -19,7 +19,7 @@ This package can be used in two modes:
 ### Quick start (no install)
 
 ```bash
-GFW_TOKEN=your_gfw_api_key_here npx @globalfishingwatch/mcp mcp
+GFW_TOKEN=your_gfw_api_key_here npx @globalfishingwatch/gfw-cli mcp
 ```
 
 `mcp` is a subcommand of the CLI that starts the MCP stdio server.
@@ -28,8 +28,8 @@ GFW_TOKEN=your_gfw_api_key_here npx @globalfishingwatch/mcp mcp
 
 The MCP server resolves the API token in this order:
 
-1. `GFW_TOKEN` environment variable
-2. `API_KEY` environment variable (compatibility alias)
+1. `GFW_TOKEN` environment variable (compatibility alias)
+2. `API_KEY` environment variable
 3. `~/.gfw/config.json` (saved via `gfw auth login`)
 
 If you have already run `gfw auth login` from the CLI, the MCP server will pick up the stored token automatically — no need to set environment variables in your client config.
@@ -46,7 +46,7 @@ If you have already run `gfw auth login` from the CLI, the MCP server will pick 
   "mcpServers": {
     "gfw": {
       "command": "npx",
-      "args": ["-y", "@globalfishingwatch/mcp", "mcp"],
+      "args": ["-y", "@globalfishingwatch/gfw-cli", "mcp"],
       "env": {
         "GFW_TOKEN": "your_gfw_api_key_here"
       }
@@ -58,7 +58,7 @@ If you have already run `gfw auth login` from the CLI, the MCP server will pick 
 #### Claude Code
 
 ```bash
-claude mcp add gfw -- npx -y @globalfishingwatch/mcp mcp
+claude mcp add gfw -- npx -y @globalfishingwatch/gfw-cli mcp
 export GFW_TOKEN=your_gfw_api_key_here
 ```
 
@@ -71,7 +71,7 @@ export GFW_TOKEN=your_gfw_api_key_here
   "mcpServers": {
     "gfw": {
       "command": "npx",
-      "args": ["-y", "@globalfishingwatch/mcp", "mcp"],
+      "args": ["-y", "@globalfishingwatch/gfw-cli", "mcp"],
       "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
     }
   }
@@ -87,7 +87,7 @@ export GFW_TOKEN=your_gfw_api_key_here
   "mcpServers": {
     "gfw": {
       "command": "npx",
-      "args": ["-y", "@globalfishingwatch/mcp", "mcp"],
+      "args": ["-y", "@globalfishingwatch/gfw-cli", "mcp"],
       "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
     }
   }
@@ -104,7 +104,7 @@ export GFW_TOKEN=your_gfw_api_key_here
     "gfw": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@globalfishingwatch/mcp", "mcp"],
+      "args": ["-y", "@globalfishingwatch/gfw-cli", "mcp"],
       "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
     }
   }
@@ -122,7 +122,7 @@ export GFW_TOKEN=your_gfw_api_key_here
       "servers": {
         "gfw": {
           "command": "npx",
-          "args": ["-y", "@globalfishingwatch/mcp", "mcp"],
+          "args": ["-y", "@globalfishingwatch/gfw-cli", "mcp"],
           "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
         }
       }
@@ -140,7 +140,7 @@ export GFW_TOKEN=your_gfw_api_key_here
   "mcpServers": {
     "gfw": {
       "command": "npx",
-      "args": ["-y", "@globalfishingwatch/mcp", "mcp"],
+      "args": ["-y", "@globalfishingwatch/gfw-cli", "mcp"],
       "env": { "GFW_TOKEN": "your_gfw_api_key_here" }
     }
   }
@@ -155,19 +155,19 @@ cd gfw-mcp
 npm install && npm run build
 ```
 
-Then replace `npx -y @globalfishingwatch/mcp` with `node /absolute/path/to/gfw-mcp/dist/bin.js` in any config above.
+Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/gfw-mcp/dist/bin.js` in any config above.
 
 ### Available MCP tools
 
-| Tool | Description |
-|------|-------------|
-| `vessel-search` | Search vessels by name, MMSI, IMO, callsign, flag, or gear type |
-| `vessel-by-id` | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata and a map URL |
-| `vessel-events` | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type |
-| `events-stats` | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type |
-| `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs |
-| `region-geometry` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO |
-| `vessel-report` | Calculate fishing or presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
+| Tool               | Description                                                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vessel-search`    | Search vessels by name, MMSI, IMO, callsign, flag, or gear type                                                                                                |
+| `vessel-by-id`     | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata and a map URL                                                                               |
+| `vessel-events`    | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                   |
+| `events-stats`     | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type  |
+| `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                        |
+| `region-geometry`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                      |
+| `vessel-report`    | Calculate fishing or presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
 
 ---
 
@@ -177,10 +177,10 @@ Then replace `npx -y @globalfishingwatch/mcp` with `node /absolute/path/to/gfw-m
 
 ```bash
 # Run without installing
-npx @globalfishingwatch/mcp --help
+npx @globalfishingwatch/gfw-cli --help
 
 # Or install globally
-npm install -g @globalfishingwatch/mcp
+npm install -g @globalfishingwatch/gfw-cli
 gfw-mcp --help
 ```
 
@@ -194,19 +194,19 @@ Token resolution order:
 
 ```bash
 # Save token interactively (stored in ~/.gfw/config.json)
-npx @globalfishingwatch/mcp auth login
+npx @globalfishingwatch/gfw-cli auth login
 
 # Check which token source is active
-npx @globalfishingwatch/mcp auth status
+npx @globalfishingwatch/gfw-cli auth status
 
 # Remove stored token
-npx @globalfishingwatch/mcp auth logout
+npx @globalfishingwatch/gfw-cli auth logout
 ```
 
 Or pass the token inline for a single command:
 
 ```bash
-GFW_TOKEN=your_key npx @globalfishingwatch/mcp vessel-search --name "Maria"
+GFW_TOKEN=your_key npx @globalfishingwatch/gfw-cli vessel-search --name "Maria"
 ```
 
 ### Commands
@@ -216,25 +216,25 @@ GFW_TOKEN=your_key npx @globalfishingwatch/mcp vessel-search --name "Maria"
 Search vessels by name, MMSI, IMO, callsign, flag, or activity date range.
 
 ```bash
-npx @globalfishingwatch/mcp vessel-search [--name <name>] [--mmsi <mmsi>] [--imo <imo>]
+npx @globalfishingwatch/gfw-cli vessel-search [--name <name>] [--mmsi <mmsi>] [--imo <imo>]
   [--callsign <cs>] [--flag <ISO3>] [--active-from <YYYY-MM-DD>]
   [--active-to <YYYY-MM-DD>] [--limit <n>]
 ```
 
 At least one filter must be provided.
 
-| Parameter | Format / values |
-|-----------|----------------|
-| `--mmsi` | 9-digit string |
-| `--imo` | 7-digit string |
-| `--flag` | ISO 3166-1 alpha-3 code (e.g. `ESP`, `CHN`, `USA`) |
-| `--active-from` / `--active-to` | `YYYY-MM-DD` |
-| `--limit` | 1–50 (default 10) |
+| Parameter                       | Format / values                                    |
+| ------------------------------- | -------------------------------------------------- |
+| `--mmsi`                        | 9-digit string                                     |
+| `--imo`                         | 7-digit string                                     |
+| `--flag`                        | ISO 3166-1 alpha-3 code (e.g. `ESP`, `CHN`, `USA`) |
+| `--active-from` / `--active-to` | `YYYY-MM-DD`                                       |
+| `--limit`                       | 1–50 (default 10)                                  |
 
 ```bash
-npx @globalfishingwatch/mcp vessel-search --name "Maria" --flag CHN
-npx @globalfishingwatch/mcp vessel-search --mmsi 123456789
-npx @globalfishingwatch/mcp vessel-search --flag ESP --active-from 2024-01-01 --active-to 2024-12-31 --limit 20
+npx @globalfishingwatch/gfw-cli vessel-search --name "Maria" --flag CHN
+npx @globalfishingwatch/gfw-cli vessel-search --mmsi 123456789
+npx @globalfishingwatch/gfw-cli vessel-search --flag ESP --active-from 2024-01-01 --active-to 2024-12-31 --limit 20
 ```
 
 #### `vessel-by-id`
@@ -242,12 +242,12 @@ npx @globalfishingwatch/mcp vessel-search --flag ESP --active-from 2024-01-01 --
 Fetch full vessel profile(s) by GFW vessel ID.
 
 ```bash
-npx @globalfishingwatch/mcp vessel-by-id --ids <id> [<id2> ...]
+npx @globalfishingwatch/gfw-cli vessel-by-id --ids <id> [<id2> ...]
 ```
 
 ```bash
-npx @globalfishingwatch/mcp vessel-by-id --ids abc123
-npx @globalfishingwatch/mcp vessel-by-id --ids abc123 def456 ghi789
+npx @globalfishingwatch/gfw-cli vessel-by-id --ids abc123
+npx @globalfishingwatch/gfw-cli vessel-by-id --ids abc123 def456 ghi789
 ```
 
 #### `vessel-events`
@@ -255,7 +255,7 @@ npx @globalfishingwatch/mcp vessel-by-id --ids abc123 def456 ghi789
 Retrieve fishing, encounter, port visit, or loitering events.
 
 ```bash
-npx @globalfishingwatch/mcp vessel-events --event-type <type>
+npx @globalfishingwatch/gfw-cli vessel-events --event-type <type>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
   [--vessel-id <id>] [--limit <n>] [--offset <n>]
   [--confidence <2|3|4> ...]          # port_visit only
@@ -263,20 +263,20 @@ npx @globalfishingwatch/mcp vessel-events --event-type <type>
   [--region-type <MPA|EEZ|RFMO>] [--region-id <id>]
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
-| `--event-type` | `fishing` \| `encounter` \| `port_visit` \| `loitering` |
-| `--start-date` / `--end-date` | `YYYY-MM-DD` |
-| `--limit` | 1–100 (default 20) |
-| `--confidence` | `2`, `3`, `4` (one or more; port_visit only; default `4`) |
-| `--encounter-types` | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
-| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
+| Parameter                     | Format / values                                                                                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--event-type`                | `fishing` \| `encounter` \| `port_visit` \| `loitering`                                                                                                         |
+| `--start-date` / `--end-date` | `YYYY-MM-DD`                                                                                                                                                    |
+| `--limit`                     | 1–100 (default 20)                                                                                                                                              |
+| `--confidence`                | `2`, `3`, `4` (one or more; port_visit only; default `4`)                                                                                                       |
+| `--encounter-types`           | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                        |
 
 ```bash
-npx @globalfishingwatch/mcp vessel-events --event-type fishing --start-date 2024-01-01 --end-date 2024-06-01
-npx @globalfishingwatch/mcp vessel-events --event-type port_visit --vessel-id abc123 --start-date 2024-01-01 --end-date 2024-12-31
-npx @globalfishingwatch/mcp vessel-events --event-type encounter --start-date 2024-01-01 --end-date 2024-12-31 --encounter-types CARRIER-FISHING SUPPORT-FISHING
-npx @globalfishingwatch/mcp vessel-events --event-type fishing --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-06-01
+npx @globalfishingwatch/gfw-cli vessel-events --event-type fishing --start-date 2024-01-01 --end-date 2024-06-01
+npx @globalfishingwatch/gfw-cli vessel-events --event-type port_visit --vessel-id abc123 --start-date 2024-01-01 --end-date 2024-12-31
+npx @globalfishingwatch/gfw-cli vessel-events --event-type encounter --start-date 2024-01-01 --end-date 2024-12-31 --encounter-types CARRIER-FISHING SUPPORT-FISHING
+npx @globalfishingwatch/gfw-cli vessel-events --event-type fishing --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-06-01
 ```
 
 #### `events-stats`
@@ -284,26 +284,26 @@ npx @globalfishingwatch/mcp vessel-events --event-type fishing --region-type EEZ
 Compute aggregate event statistics over a date range.
 
 ```bash
-npx @globalfishingwatch/mcp events-stats --event-type <type>
+npx @globalfishingwatch/gfw-cli events-stats --event-type <type>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
   [--group-by <FLAG|GEARTYPE>]
   [--region-type <MPA|EEZ|RFMO>] [--region-id <id>]
   [--confidence <levels> ...] [--encounter-types <types> ...]
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
-| `--event-type` | `fishing` \| `encounter` \| `port_visit` \| `loitering` |
-| `--start-date` / `--end-date` | `YYYY-MM-DD` |
-| `--group-by` | `FLAG` \| `GEARTYPE` (default `FLAG`) |
-| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
-| `--confidence` | `2`, `3`, `4` (one or more; port_visit only; default `4`) |
-| `--encounter-types` | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
+| Parameter                     | Format / values                                                                                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--event-type`                | `fishing` \| `encounter` \| `port_visit` \| `loitering`                                                                                                         |
+| `--start-date` / `--end-date` | `YYYY-MM-DD`                                                                                                                                                    |
+| `--group-by`                  | `FLAG` \| `GEARTYPE` (default `FLAG`)                                                                                                                           |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                        |
+| `--confidence`                | `2`, `3`, `4` (one or more; port_visit only; default `4`)                                                                                                       |
+| `--encounter-types`           | `CARRIER-FISHING` \| `CARRIER-BUNKER` \| `FISHING-BUNKER` \| `FISHING-FISHING` \| `SUPPORT-FISHING` (encounter only; default `CARRIER-FISHING SUPPORT-FISHING`) |
 
 ```bash
-npx @globalfishingwatch/mcp events-stats --event-type fishing --start-date 2024-01-01 --end-date 2024-12-31
-npx @globalfishingwatch/mcp events-stats --event-type fishing --start-date 2024-01-01 --end-date 2024-12-31 --group-by GEARTYPE
-npx @globalfishingwatch/mcp events-stats --event-type encounter --start-date 2024-01-01 --end-date 2024-12-31 --region-type RFMO --region-id WCPFC
+npx @globalfishingwatch/gfw-cli events-stats --event-type fishing --start-date 2024-01-01 --end-date 2024-12-31
+npx @globalfishingwatch/gfw-cli events-stats --event-type fishing --start-date 2024-01-01 --end-date 2024-12-31 --group-by GEARTYPE
+npx @globalfishingwatch/gfw-cli events-stats --event-type encounter --start-date 2024-01-01 --end-date 2024-12-31 --region-type RFMO --region-id WCPFC
 ```
 
 #### `region-id-lookup`
@@ -311,20 +311,20 @@ npx @globalfishingwatch/mcp events-stats --event-type encounter --start-date 202
 Resolve an MPA, EEZ, or RFMO name to its canonical ID.
 
 ```bash
-npx @globalfishingwatch/mcp region-id-lookup --region-type <MPA|EEZ|RFMO> --query <name> [--limit <n>]
+npx @globalfishingwatch/gfw-cli region-id-lookup --region-type <MPA|EEZ|RFMO> --query <name> [--limit <n>]
 ```
 
 Use this before `vessel-report` or `vessel-events` when you only know the human-readable name of a region.
 
-| Parameter | Format / values |
-|-----------|----------------|
+| Parameter       | Format / values          |
+| --------------- | ------------------------ |
 | `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
-| `--limit` | 1–20 (default 5) |
+| `--limit`       | 1–20 (default 5)         |
 
 ```bash
-npx @globalfishingwatch/mcp region-id-lookup --region-type MPA --query "Galapagos"
-npx @globalfishingwatch/mcp region-id-lookup --region-type EEZ --query "Patagonia" --limit 10
-npx @globalfishingwatch/mcp region-id-lookup --region-type RFMO --query "WCPFC"
+npx @globalfishingwatch/gfw-cli region-id-lookup --region-type MPA --query "Galapagos"
+npx @globalfishingwatch/gfw-cli region-id-lookup --region-type EEZ --query "Patagonia" --limit 10
+npx @globalfishingwatch/gfw-cli region-id-lookup --region-type RFMO --query "WCPFC"
 ```
 
 #### `region-geometry`
@@ -332,16 +332,16 @@ npx @globalfishingwatch/mcp region-id-lookup --region-type RFMO --query "WCPFC"
 Get the GeoJSON URL for a specific region (no API token required).
 
 ```bash
-npx @globalfishingwatch/mcp region-geometry --region-type <MPA|EEZ|RFMO> --id <id>
+npx @globalfishingwatch/gfw-cli region-geometry --region-type <MPA|EEZ|RFMO> --id <id>
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
+| Parameter       | Format / values          |
+| --------------- | ------------------------ |
 | `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
 
 ```bash
-npx @globalfishingwatch/mcp region-geometry --region-type EEZ --id 8386
-npx @globalfishingwatch/mcp region-geometry --region-type MPA --id 12345
+npx @globalfishingwatch/gfw-cli region-geometry --region-type EEZ --id 8386
+npx @globalfishingwatch/gfw-cli region-geometry --region-type MPA --id 12345
 ```
 
 #### `vessel-report`
@@ -351,7 +351,7 @@ Calculate fishing or presence hours inside a region. Date range must not exceed 
 > **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
 ```bash
-npx @globalfishingwatch/mcp vessel-report --region-type <MPA|EEZ|RFMO> --region-id <id>
+npx @globalfishingwatch/gfw-cli vessel-report --region-type <MPA|EEZ|RFMO> --region-id <id>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
   [--type <FISHING|PRESENCE>]
   [--flags <ISO3> ...]
@@ -361,22 +361,22 @@ npx @globalfishingwatch/mcp vessel-report --region-type <MPA|EEZ|RFMO> --region-
   [--group-by <VESSEL_ID|FLAG|GEARTYPE|FLAGANDGEARTYPE>]
 ```
 
-| Parameter | Format / values |
-|-----------|----------------|
-| `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
-| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year) |
-| `--type` | `FISHING` (default) \| `PRESENCE` |
-| `--flags` | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10 |
-| `--geartypes` | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING only) |
-| `--vessel-types` | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only) |
-| `--speeds` | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only) |
-| `--group-by` | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`) |
+| Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                         |
+| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                 |
+| `--type`                      | `FISHING` (default) \| `PRESENCE`                                                                                                                                                                                                                                                                                                                |
+| `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                           |
+| `--geartypes`                 | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING only) |
+| `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                              |
+| `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                          |
+| `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`)                                                                                                                                                                                                               |
 
 ```bash
-npx @globalfishingwatch/mcp vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31
-npx @globalfishingwatch/mcp vessel-report --region-type MPA --region-id 12345 --start-date 2024-01-01 --end-date 2024-12-31 --flags CHN ESP
-npx @globalfishingwatch/mcp vessel-report --region-type RFMO --region-id WCPFC --start-date 2024-01-01 --end-date 2024-12-31 --type FISHING --group-by FLAG
-npx @globalfishingwatch/mcp vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE --vessel-types fishing cargo
+npx @globalfishingwatch/gfw-cli vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31
+npx @globalfishingwatch/gfw-cli vessel-report --region-type MPA --region-id 12345 --start-date 2024-01-01 --end-date 2024-12-31 --flags CHN ESP
+npx @globalfishingwatch/gfw-cli vessel-report --region-type RFMO --region-id WCPFC --start-date 2024-01-01 --end-date 2024-12-31 --type FISHING --group-by FLAG
+npx @globalfishingwatch/gfw-cli vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE --vessel-types fishing cargo
 ```
 
 ### Output
@@ -384,20 +384,20 @@ npx @globalfishingwatch/mcp vessel-report --region-type EEZ --region-id 8386 --s
 All commands output JSON to stdout, ready to pipe to `jq`:
 
 ```bash
-npx @globalfishingwatch/mcp vessel-search --name "Maria" | jq '.results[].name'
-npx @globalfishingwatch/mcp vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 | jq '.fishingHours'
+npx @globalfishingwatch/gfw-cli vessel-search --name "Maria" | jq '.results[].name'
+npx @globalfishingwatch/gfw-cli vessel-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 | jq '.fishingHours'
 ```
 
 ---
 
 ## Environment variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GFW_TOKEN` | — | GFW API bearer token |
-| `API_KEY` | — | Alias for `GFW_TOKEN` (backwards compatibility) |
-| `PORT` | `4000` | HTTP port (only used with the optional HTTP transport) |
-| `NODE_ENV` | `development` | Environment name sent to Sentry |
+| Variable    | Default       | Description                                            |
+| ----------- | ------------- | ------------------------------------------------------ |
+| `GFW_TOKEN` | —             | GFW API bearer token                                   |
+| `API_KEY`   | —             | Alias for `GFW_TOKEN` (backwards compatibility)        |
+| `PORT`      | `4000`        | HTTP port (only used with the optional HTTP transport) |
+| `NODE_ENV`  | `development` | Environment name sent to Sentry                        |
 
 ---
 
