@@ -19,10 +19,20 @@ This package can be used in two modes:
 ### Quick start (no install)
 
 ```bash
-npx @globalfishingwatch/mcp mcp
+GFW_TOKEN=your_gfw_api_key_here npx @globalfishingwatch/mcp mcp
 ```
 
-Set your API key via the `GFW_TOKEN` environment variable (or `API_KEY` for compatibility).
+`mcp` is a subcommand of the CLI that starts the MCP stdio server.
+
+### Authentication
+
+The MCP server resolves the API token in this order:
+
+1. `GFW_TOKEN` environment variable
+2. `API_KEY` environment variable (compatibility alias)
+3. `~/.gfw/config.json` (saved via `gfw auth login`)
+
+If you have already run `gfw auth login` from the CLI, the MCP server will pick up the stored token automatically — no need to set environment variables in your client config.
 
 ### Client configuration
 
@@ -394,11 +404,11 @@ npx @globalfishingwatch/mcp vessel-report --region-type EEZ --region-id 8386 --s
 ## Project structure
 
 ```
-bin.ts              # Dispatcher: routes to MCP server or CLI
-index.ts            # MCP server entry point (stdio transport)
+bin.ts              # Entry point: loads CLI (dist/bin.js registered as "mcp" binary)
+index.ts            # MCP server stdio setup (used by the `mcp` CLI command)
 mcp-server.ts       # McpServer creation and tool registration
 cli/
-  index.ts          # CLI entry point (commander)
+  index.ts          # CLI entry point (commander); includes the `mcp` subcommand
   auth.ts           # Token resolution and auth commands
 middleware/
   auth.ts           # Bearer / X-API-Key authentication middleware

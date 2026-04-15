@@ -50,7 +50,7 @@ const server = createServer();
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Demo MCP Server running on stdio');
+  console.error('GFW MCP Server running on stdio');
 }
 
 main().catch((error) => {

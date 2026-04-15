@@ -57,6 +57,21 @@ const program = new Command();
 
 program.name('gfw').description('Global Fishing Watch CLI').version('1.0.0');
 
+// ── mcp ───────────────────────────────────────────────────────────────────────
+program
+  .command('mcp')
+  .description('Start the GFW MCP stdio server')
+  .action(async () => {
+    const { createServer } = await import('../mcp-server.js');
+    const { StdioServerTransport } = await import(
+      '@modelcontextprotocol/sdk/server/stdio.js'
+    );
+    const server = createServer();
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error('GFW MCP Server running on stdio');
+  });
+
 // ── auth ──────────────────────────────────────────────────────────────────────
 const auth = program.command('auth').description('Manage GFW API credentials');
 
