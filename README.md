@@ -168,6 +168,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                        |
 | `region-geometry`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                      |
 | `area-report`      | Calculate fishing, SAR, Sentinel-2, or AIS presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
+| `vessel-insights`  | Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel |
 
 ---
 
@@ -381,6 +382,30 @@ npx @globalfishingwatch/gfw-cli area-report --region-type RFMO --region-id WCPFC
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE --vessel-types fishing cargo
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type SAR
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type SENTINEL2
+```
+
+#### `vessel-insights`
+
+Retrieve insights for one or more vessels over a date range.
+
+```bash
+npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids <id> [<id2> ...]
+  --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
+  --includes <FISHING|GAP|COVERAGE|VESSEL-IDENTITY-IUU-VESSEL-LIST> [...]
+```
+
+| Parameter        | Format / values                                                                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--vessel-ids`   | One or more GFW vessel IDs                                                                                                                                                                                         |
+| `--start-date`   | `YYYY-MM-DD`                                                                                                                                                                                                       |
+| `--end-date`     | `YYYY-MM-DD`                                                                                                                                                                                                       |
+| `--includes`     | `FISHING` \| `GAP` \| `COVERAGE` \| `VESSEL-IDENTITY-IUU-VESSEL-LIST` — one or more; `FISHING`: apparent fishing events and RFMO/MPA violations; `GAP`: AIS-off dark activity; `COVERAGE`: AIS reception %; `VESSEL-IDENTITY-IUU-VESSEL-LIST`: IUU list appearances |
+
+**Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity? }` — only insight fields for requested types are present. `mapUrls` is an object keyed by vessel ID linking each vessel to its GFW map profile for the queried period — always show these URLs to the user in full.
+
+```bash
+npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids abc123 --start-date 2024-01-01 --end-date 2024-12-31 --includes FISHING GAP
+npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids abc123 def456 --start-date 2024-01-01 --end-date 2024-12-31 --includes FISHING GAP COVERAGE VESSEL-IDENTITY-IUU-VESSEL-LIST
 ```
 
 ### Output

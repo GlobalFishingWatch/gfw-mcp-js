@@ -127,3 +127,49 @@ export type ReportResponse = {
   nextOffset: number | null;
   entries: Record<string, FishingEffortEntry[]>[];
 };
+
+// ── Vessel insights response types ───────────────────────────────────────────
+
+export type VesselInsightsFishing = {
+  datasets: string[];
+  periodSelectedCounters: {
+    events: number;
+    eventsInRFMOWithoutKnownAuthorization: number;
+    eventsInNoTakeMPAs: number;
+  };
+  eventsInRfmoWithoutKnownAuthorization: unknown[];
+  eventsInNoTakeMpas: unknown[];
+};
+
+export type VesselInsightsGap = {
+  datasets: string[];
+  periodSelectedCounters: {
+    events: number;
+    eventsGapOff: number;
+  };
+  aisOff: unknown[];
+};
+
+export type VesselInsightsCoverage = {
+  blocks: string;
+  blocksWithPositions: string;
+  percentage: number;
+};
+
+export type VesselInsightsVesselIdentity = {
+  datasets: string[];
+  iuuVesselList: {
+    valuesInThePeriod: unknown[];
+    totalTimesListed: number;
+    totalTimesListedInThePeriod: number;
+  };
+};
+
+export type VesselInsightsResponse = {
+  period: { startDate: string; endDate: string };
+  vesselIdsWithoutIdentity: string[] | null;
+  apparentFishing?: VesselInsightsFishing;
+  gap?: VesselInsightsGap;
+  coverage?: VesselInsightsCoverage;
+  vesselIdentity?: VesselInsightsVesselIdentity;
+};

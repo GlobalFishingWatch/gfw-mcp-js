@@ -8,6 +8,7 @@ import { eventsStats } from '../tools/events-stats.js';
 import { regionIdLookup } from '../tools/region-id-lookup.js';
 import { regionGeometry } from '../tools/region-geometry.js';
 import { areaReport } from '../tools/area-report.js';
+import { vesselInsights } from '../tools/vessel-insights.js';
 
 function print(data: unknown) {
   console.log(JSON.stringify(data, null, 2));
@@ -253,6 +254,28 @@ program
         speeds: opts.speeds,
         geartypes: opts.geartypes,
         groupBy: opts.groupBy as any,
+      }),
+    ),
+  );
+
+// ── vessel-insights ───────────────────────────────────────────────────────────
+program
+  .command('vessel-insights')
+  .description('Retrieve insights for one or more vessels')
+  .requiredOption('--vessel-ids <ids...>', 'One or more GFW vessel IDs')
+  .requiredOption('--start-date <date>', 'Start date YYYY-MM-DD')
+  .requiredOption('--end-date <date>', 'End date YYYY-MM-DD')
+  .requiredOption(
+    '--includes <types...>',
+    'Insight types: FISHING | GAP | COVERAGE | VESSEL-IDENTITY-IUU-VESSEL-LIST',
+  )
+  .action((opts) =>
+    run(() =>
+      vesselInsights({
+        vesselIds: opts.vesselIds,
+        startDate: opts.startDate,
+        endDate: opts.endDate,
+        includes: opts.includes as any,
       }),
     ),
   );

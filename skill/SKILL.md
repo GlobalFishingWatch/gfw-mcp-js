@@ -108,6 +108,27 @@ npx @globalfishingwatch/gfw-cli vessel-by-id --ids <id> [<id2> ...]
 
 **When to use:** When you already know the GFW vessel ID(s) and want to fetch their full profiles directly, without a search query.
 
+#### vessel-insights
+
+Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels.
+
+```bash
+npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids <id> [<id2> ...]
+  --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
+  --includes <FISHING|GAP|COVERAGE|VESSEL-IDENTITY-IUU-VESSEL-LIST> [...]
+```
+
+| Parameter      | Format / values                                                                                                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--vessel-ids` | One or more GFW vessel IDs                                                                                                                                                                                         |
+| `--start-date` | `YYYY-MM-DD`                                                                                                                                                                                                       |
+| `--end-date`   | `YYYY-MM-DD`                                                                                                                                                                                                       |
+| `--includes`   | `FISHING` \| `GAP` \| `COVERAGE` \| `VESSEL-IDENTITY-IUU-VESSEL-LIST` — one or more; `FISHING`: apparent fishing events and RFMO/MPA violations; `GAP`: AIS-off dark activity; `COVERAGE`: AIS reception %; `VESSEL-IDENTITY-IUU-VESSEL-LIST`: IUU list appearances |
+
+**Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity? }` — only fields for requested types are present. `mapUrls` is an object keyed by vessel ID — each value is a GFW map URL for that vessel's profile during the queried period. Always show these URLs to the user in full.
+
+**When to use:** When you need vessel-level behavioural insights — fishing activity counts, suspected dark activity gaps, satellite tracking quality, or IUU listing history. Use alongside `vessel-by-id` or `vessel-search` to first obtain vessel IDs.
+
 #### vessel-events
 
 Retrieve individual fishing, encounter, port visit, or loitering events. Filter by vessel, region, date range, confidence, and encounter type.
@@ -298,6 +319,28 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ---
 
+### vessel-insights
+
+**Purpose:** Retrieve fishing activity, AIS gap (dark activity), coverage, and IUU vessel list insights for one or more vessels over a date range. All four parameters are required. Multiple insight types can be requested in a single call.
+
+**Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity? }` — only fields corresponding to the requested `includes` types are present. `mapUrls` is an object keyed by vessel ID linking each vessel to its GFW map profile for the queried period — always show these URLs to the user in full, never truncate or shorten them.
+- `apparentFishing` (FISHING): `{ datasets, periodSelectedCounters: { events, eventsInRFMOWithoutKnownAuthorization, eventsInNoTakeMPAs }, eventsInRfmoWithoutKnownAuthorization[], eventsInNoTakeMpas[] }`
+- `gap` (GAP): `{ datasets, periodSelectedCounters: { events, eventsGapOff }, aisOff[] }`
+- `coverage` (COVERAGE): `{ blocks, blocksWithPositions, percentage }`
+- `vesselIdentity` (VESSEL-IDENTITY-IUU-VESSEL-LIST): `{ datasets, iuuVesselList: { valuesInThePeriod[], totalTimesListed, totalTimesListedInThePeriod } }`
+
+**When to use:**
+- Use `FISHING` to assess apparent fishing activity, including potential violations inside RFMOs without known authorization or inside no-take MPAs.
+- Use `GAP` to detect suspected dark activity — periods where the vessel stopped broadcasting AIS.
+- Use `COVERAGE` to assess how reliably the vessel was tracked via satellite AIS reception.
+- Use `VESSEL-IDENTITY-IUU-VESSEL-LIST` to check if the vessel appeared on any IUU (Illegal, Unreported, Unregulated) lists during the period.
+
+**Key constraints:**
+- All four parameters (`vesselIds`, `startDate`, `endDate`, `includes`) are required.
+- `vesselIds` must contain at least one ID. Use `vessel-by-id` or `vessel-search` first if you only have the vessel name or identifiers.
+
+---
+
 ### vessel-events
 
 **Purpose:** Retrieve individual fishing, encounter, port visit, or loitering events. Filter by event type, date range, vessel ID, region, confidence (port visits), and encounter type.
@@ -382,6 +425,13 @@ When used as an MCP server, the same capabilities are available as tools:
 - _"Find all trawlers active in 2023 under the Norwegian flag"_
 - _"Look up vessel with MMSI 123456789"_
 - _"Fetch the full profile for vessel ID abc123"_
+
+### Vessel insights
+
+- _"Get fishing and gap insights for vessel ID abc123 between January and June 2024"_
+- _"Check if vessel xyz appeared on any IUU lists in 2023"_
+- _"What is the AIS coverage percentage for vessel abc123 in Q1 2024?"_
+- _"Show me all insights (fishing, gaps, coverage, IUU) for vessel abc123 over the last year"_
 
 ### Vessel events
 
