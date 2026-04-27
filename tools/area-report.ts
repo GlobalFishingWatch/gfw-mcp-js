@@ -27,7 +27,7 @@ export async function areaReport({
   regionId: string;
   startDate: string;
   endDate: string;
-  type?: 'FISHING' | 'PRESENCE';
+  type?: 'FISHING' | 'PRESENCE' | 'SAR' | 'SENTINEL2';
   flags?: string[];
   vesselTypes?: string[];
   speeds?: string[];
@@ -48,14 +48,14 @@ export async function areaReport({
 
   if (activityType === 'PRESENCE' && (groupByValue === 'GEARTYPE' || groupByValue === 'FLAGANDGEARTYPE')) {
     return createErrorResponse(
-      'groupBy "GEARTYPE" and "FLAGANDGEARTYPE" are only valid when type is "FISHING".',
+      'groupBy "GEARTYPE" and "FLAGANDGEARTYPE" are only valid when type is "FISHING", "SAR", or "SENTINEL2".',
     );
   }
-  if (activityType === 'FISHING' && Array.isArray(vesselTypes) && vesselTypes.length > 0) {
+  if ((activityType === 'FISHING' || activityType === 'SAR' || activityType === 'SENTINEL2') && Array.isArray(vesselTypes) && vesselTypes.length > 0) {
     return createErrorResponse('vesselTypes filter is only valid when type is "PRESENCE".');
   }
   if (activityType === 'PRESENCE' && Array.isArray(geartypes) && geartypes.length > 0) {
-    return createErrorResponse('geartypes filter is only valid when type is "FISHING".');
+    return createErrorResponse('geartypes filter is only valid when type is "FISHING", "SAR", or "SENTINEL2".');
   }
 
   const activityDataset = ACTIVITY_DATASETS[activityType];
@@ -173,12 +173,14 @@ export function register(server: McpServer) {
             'End date of the report period (ISO 8601 format: YYYY-MM-DD). IMPORTANT! this date is exclusive. The range between startDate and endDate must not exceed 1 year.',
           ),
         type: z
-          .enum(['FISHING', 'PRESENCE'])
+          .enum(['FISHING', 'PRESENCE', 'SAR', 'SENTINEL2'])
           .optional()
           .describe(
             'Type of activity data to use for the report. ' +
               '"FISHING" (default) uses AIS-based fishing effort data — hours when a vessel was actively fishing as detected by its movement pattern. Use this to answer questions about fishing activity, fishing pressure, or fishing hours inside a region. ' +
-              '"PRESENCE" uses vessel presence data — hours when any vessel was present inside the region regardless of whether it was fishing. Use this when the question is about vessel traffic, transit, or total time spent in the area.',
+              '"PRESENCE" uses vessel presence data — hours when any vessel was present inside the region regardless of whether it was fishing. Use this when the question is about vessel traffic, transit, or total time spent in the area. ' +
+              '"SAR" uses Synthetic Aperture Radar (SAR) vessel detection data — presence hours detected via satellite radar regardless of AIS transmission. Supports the same filters and groupBy options as "FISHING". ' +
+              '"SENTINEL2" uses Sentinel-2 optical satellite imagery vessel detection data — presence hours detected via satellite optical imagery regardless of AIS transmission. Supports the same filters and groupBy options as "FISHING".',
           ),
         flags: z
           .array(
@@ -248,7 +250,7 @@ export function register(server: McpServer) {
           .min(1)
           .optional()
           .describe(
-            'Optional list of gear types to filter by. Only applicable when type is "FISHING". When omitted, all gear types are included.',
+            'Optional list of gear types to filter by. Only applicable when type is "FISHING", "SAR", or "SENTINEL2". When omitted, all gear types are included.',
           ),
         groupBy: z
           .enum(['VESSEL_ID', 'FLAG', 'GEARTYPE', 'FLAGANDGEARTYPE'])
@@ -257,8 +259,8 @@ export function register(server: McpServer) {
             'How to group the report results. ' +
               '"VESSEL_ID" (default): results grouped per individual vessel. ' +
               '"FLAG": results aggregated by flag state. ' +
-              '"GEARTYPE": results aggregated by gear type — only valid when type is "FISHING". ' +
-              '"FLAGANDGEARTYPE": results aggregated by flag state and gear type combined — only valid when type is "FISHING".',
+              '"GEARTYPE": results aggregated by gear type — only valid when type is "FISHING", "SAR", or "SENTINEL2". ' +
+              '"FLAGANDGEARTYPE": results aggregated by flag state and gear type combined — only valid when type is "FISHING", "SAR", or "SENTINEL2".',
           ),
       },
       outputSchema: {
@@ -322,10 +324,12 @@ export function register(server: McpServer) {
         if ('isError' in output) return output;
         const flagText = output.flags && output.flags.length > 0 ? `\nFlag Filters: ${output.flags.join(', ')}` : '';
         const activityType = params.type ?? 'FISHING';
-        const responseText = `${activityType === 'FISHING' ? 'Fishing Hours Report' : 'Presence Hours Report'} for ${output.regionType} ID: ${output.regionId}${flagText}
+        const reportTitle = activityType === 'FISHING' ? 'Fishing Hours Report' : activityType === 'SAR' ? 'SAR Presence Hours Report' : activityType === 'SENTINEL2' ? 'Sentinel-2 Presence Hours Report' : 'Presence Hours Report';
+        const activityLabel = activityType === 'FISHING' ? 'Fishing' : activityType === 'SAR' ? 'SAR Presence' : activityType === 'SENTINEL2' ? 'Sentinel-2 Presence' : 'Presence';
+        const responseText = `${reportTitle} for ${output.regionType} ID: ${output.regionId}${flagText}
 Date Range: ${output.dateRange.start} to ${output.dateRange.end}
 
-Total ${activityType} Hours: ${output.fishingHours} hours
+Total ${activityLabel} Hours: ${output.fishingHours} hours
 
 View detailed data on the Global Fishing Watch map:
 ${output.gfwMapUrl}
@@ -334,8 +338,9 @@ Full data: ${JSON.stringify(output, null, 2)}`;
         return createToolResponse(responseText, output as unknown as Record<string, unknown>);
       } catch (err) {
         const activityType = params.type ?? 'FISHING';
+        const activityLabel = activityType === 'FISHING' ? 'fishing' : activityType === 'SAR' ? 'SAR presence' : activityType === 'SENTINEL2' ? 'Sentinel-2 presence' : 'presence';
         return createErrorResponse(
-          `Failed to generate ${activityType} hours report: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to generate ${activityLabel} hours report: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     },

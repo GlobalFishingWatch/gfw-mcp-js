@@ -13,6 +13,8 @@ export type RegionType = keyof typeof REGION_DATASETS;
 export const ACTIVITY_DATASETS = {
   FISHING: 'public-global-fishing-effort:v4.0',
   PRESENCE: 'public-global-presence:v4.0',
+  SAR: 'public-global-sar-presence:latest',
+  SENTINEL2: 'public-global-sentinel2-presence:latest',
 } as const;
 
 export type ActivityType = keyof typeof ACTIVITY_DATASETS;

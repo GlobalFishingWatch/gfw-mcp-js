@@ -4,6 +4,8 @@ import { REGION_DATASETS } from './types';
 const DATA_DATAVIEW_INSTANCES = {
   FISHING: 'ais',
   PRESENCE: 'presence',
+  SAR: 'sar',
+  SENTINEL2: 'sentinel2',
 } as const;
 
 const REGIONS_DATAVIEW_INSTANCES = {
@@ -48,6 +50,20 @@ export function generateReportUrl(
       filters: type === 'PRESENCE' ? filters : undefined,
     },
   };
+  const dataviewSAR = {
+    id: DATA_DATAVIEW_INSTANCES['SAR'],
+    cfg: {
+      vis: type === 'SAR' ? true : false,
+      filters: type === 'SAR' ? filters : undefined,
+    },
+  };
+  const dataviewSentinel2 = {
+    id: DATA_DATAVIEW_INSTANCES['SENTINEL2'],
+    cfg: {
+      vis: type === 'SENTINEL2' ? true : false,
+      filters: type === 'SENTINEL2' ? filters : undefined,
+    },
+  };
   const dataviewVMS = {
     id: 'vms',
     cfg: {
@@ -63,11 +79,11 @@ export function generateReportUrl(
   console.error(
     'object',
     JSON.stringify({
-      dvIn: [dataviewAIS, dataviewVMS, dataviewPresence, dataviewRegion],
+      dvIn: [dataviewAIS, dataviewVMS, dataviewPresence, dataviewSAR, dataviewSentinel2, dataviewRegion],
     }),
   );
   const dataviewInstances = stringify(
-    { dvIn: [dataviewAIS, dataviewVMS, dataviewPresence, dataviewRegion] },
+    { dvIn: [dataviewAIS, dataviewVMS, dataviewPresence, dataviewSAR, dataviewSentinel2, dataviewRegion] },
     { arrayFormat: 'indices' },
   );
   dynamicPath += `&${dataviewInstances}`;

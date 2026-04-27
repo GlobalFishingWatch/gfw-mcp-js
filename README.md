@@ -167,7 +167,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | `events-stats`     | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events) |
 | `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                        |
 | `region-geometry`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                      |
-| `area-report`      | Calculate fishing or presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
+| `area-report`      | Calculate fishing, SAR, Sentinel-2, or AIS presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
 
 ---
 
@@ -348,16 +348,16 @@ npx @globalfishingwatch/gfw-cli region-geometry --region-type MPA --id 12345
 
 #### `area-report`
 
-Calculate fishing or presence hours inside a region. Date range must not exceed 1 year.
+Calculate fishing, SAR, Sentinel-2, or AIS presence hours inside a region. Date range must not exceed 1 year.
 
 > **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
 ```bash
 npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --region-id <id>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
-  [--type <FISHING|PRESENCE>]
+  [--type <FISHING|PRESENCE|SAR|SENTINEL2>]
   [--flags <ISO3> ...]
-  [--geartypes <type> ...]    # FISHING only
+  [--geartypes <type> ...]    # FISHING/SAR/SENTINEL2 only
   [--vessel-types <type> ...] # PRESENCE only
   [--speeds <range> ...]      # PRESENCE only
   [--group-by <VESSEL_ID|FLAG|GEARTYPE|FLAGANDGEARTYPE>]
@@ -367,18 +367,20 @@ npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --regio
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                         |
 | `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                 |
-| `--type`                      | `FISHING` (default) \| `PRESENCE`                                                                                                                                                                                                                                                                                                                |
+| `--type`                      | `FISHING` (default) \| `PRESENCE` \| `SAR` \| `SENTINEL2` — `FISHING`: AIS-based fishing effort hours; `PRESENCE`: AIS vessel presence hours regardless of activity; `SAR`: Synthetic Aperture Radar vessel detection hours (satellite radar, independent of AIS); `SENTINEL2`: Sentinel-2 optical satellite imagery vessel detection hours        |
 | `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                           |
-| `--geartypes`                 | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING only) |
+| `--geartypes`                 | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING/SAR/SENTINEL2 only) |
 | `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                              |
 | `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                          |
-| `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`)                                                                                                                                                                                                               |
+| `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`, `SAR`, or `SENTINEL2`)                                                                                                                                                                                       |
 
 ```bash
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31
 npx @globalfishingwatch/gfw-cli area-report --region-type MPA --region-id 12345 --start-date 2024-01-01 --end-date 2024-12-31 --flags CHN ESP
 npx @globalfishingwatch/gfw-cli area-report --region-type RFMO --region-id WCPFC --start-date 2024-01-01 --end-date 2024-12-31 --type FISHING --group-by FLAG
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE --vessel-types fishing cargo
+npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type SAR
+npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type SENTINEL2
 ```
 
 ### Output

@@ -221,9 +221,9 @@ Calculate fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) f
 ```bash
 npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --region-id <id>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
-  [--type <FISHING|PRESENCE>]
+  [--type <FISHING|PRESENCE|SAR|SENTINEL2>]
   [--flags <ISO3> ...]
-  [--geartypes <type> ...]    # FISHING only
+  [--geartypes <type> ...]    # FISHING/SAR/SENTINEL2 only
   [--vessel-types <type> ...] # PRESENCE only
   [--speeds <range> ...]      # PRESENCE only
   [--group-by <VESSEL_ID|FLAG|GEARTYPE|FLAGANDGEARTYPE>]
@@ -231,16 +231,16 @@ npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --regio
 
 Date range must not exceed 1 year.
 
-| Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                  |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                         |
-| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                 |
-| `--type`                      | `FISHING` (default) \| `PRESENCE`                                                                                                                                                                                                                                                                                                                |
-| `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                           |
-| `--geartypes`                 | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING only) |
-| `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                              |
-| `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                          |
-| `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`)                                                                                                                                                                                                               |
+| Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                             |
+| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                     |
+| `--type`                      | `FISHING` (default) \| `PRESENCE` \| `SAR` \| `SENTINEL2` — `FISHING`: AIS-based fishing effort hours; `PRESENCE`: AIS vessel presence hours regardless of activity; `SAR`: Synthetic Aperture Radar vessel detection hours (satellite radar, independent of AIS); `SENTINEL2`: Sentinel-2 optical satellite imagery vessel detection hours          |
+| `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                               |
+| `--geartypes`                 | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING/SAR/SENTINEL2 only) |
+| `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                                  |
+| `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                              |
+| `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`, `SAR`, or `SENTINEL2`)                                                                                                                                                                                           |
 
 **Returns:** `{ regionType, regionId, dateRange, fishingHours, gfwMapUrl }` plus:
 
@@ -252,12 +252,14 @@ Date range must not exceed 1 year.
 
 - Use `--type FISHING` (default) for questions about fishing activity, fishing pressure, or fishing hours inside a region. Based on AIS movement patterns classified as fishing.
 - Use `--type PRESENCE` for questions about vessel traffic, vessel transit, or total time any vessel spent in the area, regardless of whether they were fishing.
+- Use `--type SAR` for questions about SAR-detected vessel activity — satellite radar detections independent of AIS, useful for detecting vessels not broadcasting AIS.
+- Use `--type SENTINEL2` for questions about Sentinel-2 optically detected vessel activity — satellite optical imagery detections independent of AIS.
 
 **Notes:**
 
 - Run `region-id-lookup` first if you only have the region name.
 - `gfwMapUrl` must always be shown to the user in full — never truncate or shorten it.
-- `--geartypes` and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `--type FISHING`.
+- `--geartypes` and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `--type FISHING`, `--type SAR`, or `--type SENTINEL2`.
 - `--vessel-types` and `--speeds` are only valid with `--type PRESENCE`.
 
 ### Output
@@ -346,7 +348,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ### area-report
 
-**Purpose:** Calculate total fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
+**Purpose:** Calculate total fishing, SAR, Sentinel-2, or AIS vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
 
 **Returns:** `{ regionType, regionId, dateRange, fishingHours, gfwMapUrl }` plus:
 
@@ -358,12 +360,14 @@ When used as an MCP server, the same capabilities are available as tools:
 
 - Use `type: FISHING` (default) for questions about fishing activity or fishing pressure: hours when vessels were classified as actively fishing.
 - Use `type: PRESENCE` for questions about vessel traffic or transit: hours when any vessel was inside the region regardless of activity.
+- Use `type: SAR` for questions about SAR-detected vessel activity: satellite radar detections independent of AIS, useful for detecting vessels not broadcasting AIS.
+- Use `type: SENTINEL2` for questions about Sentinel-2 optically detected vessel activity: satellite optical imagery detections independent of AIS.
 
 **Key constraints:**
 
 - **Never call in parallel.** If multiple reports are needed, call them sequentially.
 - Date range cannot exceed 1 year.
-- `geartypes` filter and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `type: FISHING`.
+- `geartypes` filter and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `type: FISHING`, `type: SAR`, or `type: SENTINEL2`.
 - `vesselTypes` and `speeds` filters are only valid with `type: PRESENCE`.
 - `gfwMapUrl` must always be shown to the user in full — never truncate, shorten, or summarize it.
 - Run `region-id-lookup` first if you only have the human-readable region name.
@@ -399,6 +403,8 @@ When used as an MCP server, the same capabilities are available as tools:
 - _"Show me fishing hours in the WCPFC RFMO broken down by gear type for 2023"_
 - _"Compare fishing pressure by flag state inside the Mozambique Channel EEZ in the first half of 2024"_
 - _"How many trawling hours were logged in the Mediterranean Sea EEZ in 2022?"_
+- _"How many SAR-detected vessel hours were recorded inside the South China Sea EEZ in 2023?"_
+- _"Show me Sentinel-2 detected vessel hours in the Strait of Hormuz EEZ for 2023"_
 
 ### Event statistics
 
