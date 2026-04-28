@@ -58,7 +58,7 @@ describe('areaReport — date range validation', () => {
       startDate: '2022-01-01',
       endDate: '2023-06-01',
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
     expect((result as any).content[0].text).toContain('1 year');
   });
 
@@ -70,7 +70,7 @@ describe('areaReport — date range validation', () => {
       startDate: '2023-01-01',
       endDate: '2023-12-31',
     });
-    expect(result).not.toHaveProperty('isError');
+    expect((result as any).isError).toBeUndefined();
   });
 });
 
@@ -84,7 +84,7 @@ describe('areaReport — groupBy + type validation', () => {
       type: 'PRESENCE',
       groupBy: 'GEARTYPE',
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
   });
 
   it('rejects FLAGANDGEARTYPE groupBy with PRESENCE', async () => {
@@ -96,7 +96,7 @@ describe('areaReport — groupBy + type validation', () => {
       type: 'PRESENCE',
       groupBy: 'FLAGANDGEARTYPE',
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
   });
 
   it('rejects vesselTypes filter with FISHING type', async () => {
@@ -108,7 +108,7 @@ describe('areaReport — groupBy + type validation', () => {
       type: 'FISHING',
       vesselTypes: ['fishing'],
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
     expect((result as any).content[0].text).toContain('vesselTypes');
   });
 
@@ -121,7 +121,7 @@ describe('areaReport — groupBy + type validation', () => {
       type: 'PRESENCE',
       geartypes: ['trawlers'],
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
     expect((result as any).content[0].text).toContain('geartypes');
   });
 });

@@ -384,6 +384,18 @@ npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 -
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type SENTINEL2
 ```
 
+**Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` plus one activity value field:
+
+- `fishingHours` — total fishing hours (present when `--type FISHING`)
+- `presenceHours` — total vessel presence hours (present when `--type PRESENCE`)
+- `detections` — total SAR or Sentinel-2 vessel detections (present when `--type SAR` or `--type SENTINEL2`)
+
+And optionally:
+
+- `topVessels` — top 10 vessels sorted descending by activity, each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, and `value` (hours for FISHING/PRESENCE; detections for SAR/SENTINEL2). Only present when `--group-by VESSEL_ID`.
+- `rows` — aggregated entries sorted descending by activity value, each containing the grouping fields plus `hours`. Only present when `--group-by FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
+- Applied filters (`flags`, `vesselTypes`, `speeds`, `geartypes`) echoed back when provided.
+
 #### `vessel-insights`
 
 Retrieve insights for one or more vessels over a date range.
@@ -415,6 +427,8 @@ All commands output JSON to stdout, ready to pipe to `jq`:
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-search --name "Maria" | jq '.results[].name'
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 | jq '.fishingHours'
+npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE | jq '.presenceHours'
+npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type SAR | jq '.detections'
 ```
 
 ---

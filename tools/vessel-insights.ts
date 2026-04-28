@@ -7,8 +7,13 @@ import { VesselInsightsResponse } from '../lib/types.js';
 
 const VESSEL_DATASET = 'public-global-vessel-identity:latest';
 
-const INSIGHT_TYPES = ['FISHING', 'GAP', 'COVERAGE', 'VESSEL-IDENTITY-IUU-VESSEL-LIST'] as const;
-type InsightType = typeof INSIGHT_TYPES[number];
+const INSIGHT_TYPES = [
+  'FISHING',
+  'GAP',
+  'COVERAGE',
+  'VESSEL-IDENTITY-IUU-VESSEL-LIST',
+] as const;
+type InsightType = (typeof INSIGHT_TYPES)[number];
 
 export async function vesselInsights({
   vesselIds,
@@ -33,7 +38,7 @@ export async function vesselInsights({
     params[`includes[${i}]`] = type;
   });
 
-  const response = await gfwFetch('/v3/vessels/insights', params);
+  const response = await gfwFetch('/v3/insights/vessels', params);
   const data: VesselInsightsResponse = await response.json();
 
   const mapUrls: Record<string, string> = {};
@@ -70,7 +75,14 @@ export function register(server: McpServer) {
           .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use ISO 8601 date format YYYY-MM-DD.')
           .describe('End date of the insight period (YYYY-MM-DD).'),
         includes: z
-          .array(z.enum(['FISHING', 'GAP', 'COVERAGE', 'VESSEL-IDENTITY-IUU-VESSEL-LIST']))
+          .array(
+            z.enum([
+              'FISHING',
+              'GAP',
+              'COVERAGE',
+              'VESSEL-IDENTITY-IUU-VESSEL-LIST',
+            ]),
+          )
           .min(1)
           .describe(
             'Insight types to include in the response. ' +
@@ -101,7 +113,9 @@ export function register(server: McpServer) {
             eventsInNoTakeMpas: z.array(z.unknown()),
           })
           .optional()
-          .describe('Apparent fishing insight. Present when "FISHING" is included.'),
+          .describe(
+            'Apparent fishing insight. Present when "FISHING" is included.',
+          ),
         gap: z
           .object({
             datasets: z.array(z.string()),
@@ -112,7 +126,9 @@ export function register(server: McpServer) {
             aisOff: z.array(z.unknown()),
           })
           .optional()
-          .describe('AIS gap (dark activity) insight. Present when "GAP" is included.'),
+          .describe(
+            'AIS gap (dark activity) insight. Present when "GAP" is included.',
+          ),
         coverage: z
           .object({
             blocks: z.string(),
@@ -120,7 +136,9 @@ export function register(server: McpServer) {
             percentage: z.number(),
           })
           .optional()
-          .describe('AIS reception coverage insight. Present when "COVERAGE" is included.'),
+          .describe(
+            'AIS reception coverage insight. Present when "COVERAGE" is included.',
+          ),
         vesselIdentity: z
           .object({
             datasets: z.array(z.string()),
@@ -131,11 +149,13 @@ export function register(server: McpServer) {
             }),
           })
           .optional()
-          .describe('IUU vessel list insight. Present when "VESSEL-IDENTITY-IUU-VESSEL-LIST" is included.'),
+          .describe(
+            'IUU vessel list insight. Present when "VESSEL-IDENTITY-IUU-VESSEL-LIST" is included.',
+          ),
         mapUrls: z
           .record(z.string())
           .describe(
-            'Map URLs keyed by vessel ID. Each URL links to the vessel\'s profile on the Global Fishing Watch map for the queried period. IMPORTANT!! Always share these full links with the user when presenting results. NEVER truncate, shorten, or summarize them.',
+            "Map URLs keyed by vessel ID. Each URL links to the vessel's profile on the Global Fishing Watch map for the queried period. IMPORTANT!! Always share these full links with the user when presenting results. NEVER truncate, shorten, or summarize them.",
           ),
       },
     },
@@ -163,7 +183,9 @@ export function register(server: McpServer) {
         }
         if (output.gap) {
           const c = output.gap.periodSelectedCounters;
-          lines.push(`GAP: ${c.events} AIS-off events (${c.eventsGapOff} gap-off)`);
+          lines.push(
+            `GAP: ${c.events} AIS-off events (${c.eventsGapOff} gap-off)`,
+          );
         }
         if (output.coverage) {
           lines.push(
@@ -186,7 +208,10 @@ export function register(server: McpServer) {
 
         lines.push('', `Full data: ${JSON.stringify(output, null, 2)}`);
 
-        return createToolResponse(lines.join('\n'), output as unknown as Record<string, unknown>);
+        return createToolResponse(
+          lines.join('\n'),
+          output as unknown as Record<string, unknown>,
+        );
       } catch (err) {
         return createErrorResponse(
           `Failed to fetch vessel insights: ${err instanceof Error ? err.message : String(err)}`,

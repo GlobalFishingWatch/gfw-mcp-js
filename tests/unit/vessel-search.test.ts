@@ -54,7 +54,7 @@ beforeEach(() => {
 describe('vesselSearch — error on no criteria', () => {
   it('returns error when no filters provided', async () => {
     const result = await vesselSearch({});
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
     expect((result as any).content[0].text).toContain('No search criteria');
   });
 });

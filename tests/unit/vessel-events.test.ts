@@ -46,7 +46,7 @@ describe('vesselEvents — cross-field validation', () => {
       endDate: '2024-03-01',
       confidence: [4],
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
     expect((result as any).content[0].text).toContain('confidence');
   });
 
@@ -57,7 +57,7 @@ describe('vesselEvents — cross-field validation', () => {
       endDate: '2024-03-01',
       encounterTypes: ['CARRIER-FISHING'],
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
     expect((result as any).content[0].text).toContain('encounterTypes');
   });
 
@@ -68,7 +68,7 @@ describe('vesselEvents — cross-field validation', () => {
       endDate: '2024-03-01',
       regionType: 'EEZ',
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
     expect((result as any).content[0].text).toContain('regionType and regionId');
   });
 
@@ -79,7 +79,7 @@ describe('vesselEvents — cross-field validation', () => {
       endDate: '2024-03-01',
       regionId: '8489',
     });
-    expect(result.isError).toBe(true);
+    expect((result as any).isError).toBe(true);
   });
 });
 

@@ -13,8 +13,8 @@ export type RegionType = keyof typeof REGION_DATASETS;
 export const ACTIVITY_DATASETS = {
   FISHING: 'public-global-fishing-effort:v4.0',
   PRESENCE: 'public-global-presence:v4.0',
-  SAR: 'public-global-sar-presence:latest',
-  SENTINEL2: 'public-global-sentinel2-presence:latest',
+  SAR: 'public-global-sar-presence:v4.0',
+  SENTINEL2: 'public-global-sentinel2-presence:v4.0',
 } as const;
 
 export type ActivityType = keyof typeof ACTIVITY_DATASETS;
@@ -120,12 +120,26 @@ export type FishingEffortEntry = {
   vesselType: string;
 };
 
+export type SarPresenceEntry = {
+  callsign: string;
+  dataset: string;
+  date: string;
+  detections: number;
+  flag: string;
+  geartype: string;
+  imo: string;
+  mmsi: string;
+  shipName: string;
+  vesselId: string;
+  vesselType: string;
+};
+
 export type ReportResponse = {
   total: number;
   limit: number | null;
   offset: number | null;
   nextOffset: number | null;
-  entries: Record<string, FishingEffortEntry[]>[];
+  entries: Record<string, (FishingEffortEntry | SarPresenceEntry)[]>[];
 };
 
 // ── Vessel insights response types ───────────────────────────────────────────
