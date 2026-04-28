@@ -24,7 +24,9 @@
     "dev": "tsx index.ts",
     "cli": "tsx cli/index.ts",
     "link": "npm run build && npm link",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.22.0",
@@ -41,6 +43,7 @@
     "@types/express": "^5.0.5",
     "@types/node": "^24.10.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
   }
 }
