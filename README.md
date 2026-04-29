@@ -133,7 +133,16 @@ export GFW_TOKEN=your_gfw_api_key_here
 
 #### Gemini CLI
 
-`~/.gemini/settings.json` (global) or `.gemini/settings.json` (per project)
+One-line install (Gemini Extensions):
+
+```bash
+gemini extensions install https://github.com/GlobalFishingWatch/gfw-mcp-js
+export GFW_TOKEN=your_gfw_api_key_here
+```
+
+This installs the MCP server, the agent instructions ([SKILL.md](SKILL.md)), and registers the extension automatically.
+
+Manual config alternative — `~/.gemini/settings.json` (global) or `.gemini/settings.json` (per project):
 
 ```json
 {
@@ -146,6 +155,16 @@ export GFW_TOKEN=your_gfw_api_key_here
   }
 }
 ```
+
+#### Claude Code (Skill)
+
+The repo ships a [SKILL.md](SKILL.md) at the root. Drop the repo into your Claude skills directory:
+
+```bash
+git clone https://github.com/GlobalFishingWatch/gfw-mcp-js ~/.claude/skills/gfw-mcp-js
+```
+
+Claude Code auto-discovers `SKILL.md` and loads the agent guidelines plus tool reference. Pair with the MCP server config above (`claude mcp add gfw -- npx -y @globalfishingwatch/gfw-cli mcp`) so the skill's tool documentation matches the live MCP tools.
 
 ### Alternative: local clone
 
