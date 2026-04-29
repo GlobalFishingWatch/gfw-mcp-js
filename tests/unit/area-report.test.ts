@@ -195,7 +195,7 @@ describe('areaReport — response aggregation', () => {
     setupFetchMock(makeReportResponse([makeVesselRow({ hours: 10 }), makeVesselRow({ vesselId: 'v2', hours: 20 })]));
     const result = await areaReport({ regionType: 'EEZ', regionId: '8489', startDate: '2024-01-01', endDate: '2024-06-01' }) as any;
     expect(result.topVessels).toBeDefined();
-    expect(result.topVessels[0].hours).toBeGreaterThanOrEqual(result.topVessels[1]?.hours ?? 0);
+    expect(result.topVessels[0].value).toBeGreaterThanOrEqual(result.topVessels[1]?.value ?? 0);
   });
 
   it('returns rows (not topVessels) when groupBy is FLAG', async () => {
