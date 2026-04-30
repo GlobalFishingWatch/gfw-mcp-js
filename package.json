@@ -4,6 +4,9 @@
   "description": "MCP server for Global Fishing Watch data — vessel search, events, fishing hours, and region lookups",
   "author": "Global Fishing Watch",
   "license": "Apache-2.0",
+  "repository": {
+    "url": "https://github.com/GlobalFishingWatch/gfw-mcp-js"
+  },
   "keywords": [
     "mcp",
     "model-context-protocol",
