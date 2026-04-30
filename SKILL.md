@@ -1,6 +1,6 @@
 ---
 name: gfw-mcp-js
-description: Query Global Fishing Watch data — search vessels, retrieve fishing events, calculate fishing/presence hours inside MPAs, EEZs and RFMOs, and get event statistics.
+description: Query Global Fishing Watch data — search vessels, retrieve fishing events, calculate fishing/presence hours inside MPAs, EEZs and RFMOs, get event statistics, and generate map screenshots of vessel tracks, fishing activity, and area reports. Use this skill whenever the user asks for a GFW map, vessel track visualization, activity map, or any visual representation of fishing or vessel data — always generate a screenshot using scripts/screenshot_gfw.js.
 metadata:
   {
     'clawdbot':
@@ -18,6 +18,7 @@ Access [Global Fishing Watch](https://globalfishingwatch.org) data directly from
 
 When using this skill, the agent must follow these rules:
 
+- **ALWAYS SCREENSHOT MAPS (mandatory):** Whenever the user requests a map of any activity (fishing, vessel presence, encounters, port visits, vessel tracks, area reports, etc.), or whenever a tool returns a `mapUrl` or `gfwMapUrl`, you MUST generate a screenshot using the script at `scripts/screenshot_gfw.js` and embed the image in your response. This is not optional. Steps: (1) install if needed: `npm install playwright && npx playwright install chromium`; (2) run: `node scripts/screenshot_gfw.js <url> <output_path>` with a descriptive path like `/tmp/gfw_vessel_<vesselId>.png`; (3) embed: `![description](path/to/screenshot.png)`. Always show the screenshot alongside the URL — never instead of it.
 - **Concise:** Return only what was asked. Do not add summaries, commentary, or unsolicited context.
 - **Objective:** Do not interpret data beyond what is directly observable. If an interpretation is offered, always include the specific evidence (numbers, fields, values) that support it.
 - **Prefer GFW data:** Always prioritize GFW tools and data over external sources or general knowledge.
@@ -25,7 +26,7 @@ When using this skill, the agent must follow these rules:
 - **Disclose assumed parameters:** If you choose a value for any parameter on your own (date ranges, vessel types, gear types, confidence levels, etc.), explicitly tell the user what you assumed and why before or alongside the result.
 - **Never alter URLs:** Return all URLs exactly as the tool provides them — do not shorten, truncate, reformat, or paraphrase them. The user must be able to open them directly.
 - **Always show URLs:** Every URL present in any tool response must be shown to the user, without exception. Never omit, hide, or summarize a URL. Display each one as a clickable link on its own line.
-- **Include screenshots when a map URL is available:** Whenever a tool returns a `mapUrl` or `gfwMapUrl`, generate a screenshot of that URL using the script at `scripts/screenshot_gfw.js` and embed the image in your response. The script requires the `playwright` Node.js package — if it is not installed, run `npm install playwright && npx playwright install chromium` first. Then run `node scripts/screenshot_gfw.js <url> <output_path>`, choosing a descriptive output path (e.g. `/tmp/gfw_vessel_<vesselId>.png`). After the screenshot is saved, embed it in your response using `![description](path/to/screenshot.png)`. Always include the screenshot alongside the URL — never instead of it.
+
 - **Never run multiple reports in parallel:** If you need to calculate multiple `area-report`s, run them sequentially — one at a time, waiting for each to complete before starting the next.
 - **When in doubt, ask the user:** If you are unsure about any parameter value, filter, or option to use, ask the user for clarification before proceeding. Do not make assumptions without confirming them with the user first.
 - **Use `vessel-by-id` when you have a GFW vessel ID:** If you already have the GFW vessel ID, use the `vessel-by-id` tool to fetch the full vessel profile directly, instead of using `vessel-search`.
@@ -433,6 +434,37 @@ And optionally:
 - `vesselTypes` and `speeds` filters are only valid with `type: PRESENCE`.
 - `gfwMapUrl` must always be shown to the user in full — never truncate, shorten, or summarize it.
 - Run `region-id-lookup` first if you only have the human-readable region name.
+
+---
+
+### screenshot
+
+Generate a screenshot of a GFW map URL using the Playwright-based script at `scripts/screenshot_gfw.js`.
+
+**Prerequisites:** Requires `playwright` and the Chromium browser. Install once if not already present:
+
+```bash
+npm install playwright && npx playwright install chromium
+```
+
+**Usage:**
+
+```bash
+node scripts/screenshot_gfw.js <url> <output_path>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<url>` | The full GFW map URL (e.g. a `mapUrl` or `gfwMapUrl` from any tool response) |
+| `<output_path>` | Destination path for the PNG file (e.g. `/tmp/gfw_vessel_abc123.png`) |
+
+After saving, embed the image in your response:
+
+```markdown
+![description](/tmp/gfw_vessel_abc123.png)
+```
+
+**When to run:** Automatically whenever the user requests a map of any activity, or whenever a tool response contains a `mapUrl` or `gfwMapUrl`. Always show the screenshot alongside the URL — never instead of it.
 
 ---
 
