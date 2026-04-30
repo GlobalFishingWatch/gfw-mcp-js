@@ -48,7 +48,7 @@ The CLI resolves the API token in this order:
 
 1. `GFW_TOKEN` environment variable
 2. `API_KEY` environment variable (compatibility alias)
-3. `~/.gfw/config.json` (saved via `auth login`)
+3. `~/.gfw/config.json` (saved via `npx @globalfishingwatch/gfw-cli auth login`)
 
 ```bash
 # Save token interactively
@@ -118,11 +118,11 @@ npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids <id> [<id2> ...]
   --includes <FISHING|GAP|COVERAGE|VESSEL-IDENTITY-IUU-VESSEL-LIST> [...]
 ```
 
-| Parameter      | Format / values                                                                                                                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--vessel-ids` | One or more GFW vessel IDs                                                                                                                                                                                         |
-| `--start-date` | `YYYY-MM-DD`                                                                                                                                                                                                       |
-| `--end-date`   | `YYYY-MM-DD`                                                                                                                                                                                                       |
+| Parameter      | Format / values                                                                                                                                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--vessel-ids` | One or more GFW vessel IDs                                                                                                                                                                                                                                          |
+| `--start-date` | `YYYY-MM-DD`                                                                                                                                                                                                                                                        |
+| `--end-date`   | `YYYY-MM-DD`                                                                                                                                                                                                                                                        |
 | `--includes`   | `FISHING` \| `GAP` \| `COVERAGE` \| `VESSEL-IDENTITY-IUU-VESSEL-LIST` — one or more; `FISHING`: apparent fishing events and RFMO/MPA violations; `GAP`: AIS-off dark activity; `COVERAGE`: AIS reception %; `VESSEL-IDENTITY-IUU-VESSEL-LIST`: IUU list appearances |
 
 **Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity? }` — only fields for requested types are present. `mapUrls` is an object keyed by vessel ID — each value is a GFW map URL for that vessel's profile during the queried period. Always show these URLs to the user in full.
@@ -252,16 +252,16 @@ npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --regio
 
 Date range must not exceed 1 year.
 
-| Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                      |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                             |
-| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                     |
-| `--type`                      | `FISHING` (default) \| `PRESENCE` \| `SAR` \| `SENTINEL2` — `FISHING`: AIS-based fishing effort hours; `PRESENCE`: AIS vessel presence hours regardless of activity; `SAR`: Synthetic Aperture Radar vessel detection hours (satellite radar, independent of AIS); `SENTINEL2`: Sentinel-2 optical satellite imagery vessel detection hours          |
-| `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                               |
+| Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                                       |
+| `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                               |
+| `--type`                      | `FISHING` (default) \| `PRESENCE` \| `SAR` \| `SENTINEL2` — `FISHING`: AIS-based fishing effort hours; `PRESENCE`: AIS vessel presence hours regardless of activity; `SAR`: Synthetic Aperture Radar vessel detection hours (satellite radar, independent of AIS); `SENTINEL2`: Sentinel-2 optical satellite imagery vessel detection hours                    |
+| `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                                         |
 | `--geartypes`                 | `tuna_purse_seines` \| `driftnets` \| `trollers` \| `set_longlines` \| `purse_seines` \| `pots_and_traps` \| `other_fishing` \| `dredge_fishing` \| `set_gillnets` \| `fixed_gear` \| `trawlers` \| `fishing` \| `seiners` \| `other_purse_seines` \| `other_seines` \| `squid_jigger` \| `pole_and_line` \| `drifting_longlines` (FISHING/SAR/SENTINEL2 only) |
-| `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                                  |
-| `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                              |
-| `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`, `SAR`, or `SENTINEL2`)                                                                                                                                                                                           |
+| `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                                            |
+| `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                                        |
+| `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`, `SAR`, or `SENTINEL2`)                                                                                                                                                                                                      |
 
 **Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` plus one activity value field:
 
@@ -334,18 +334,21 @@ When used as an MCP server, the same capabilities are available as tools:
 **Purpose:** Retrieve fishing activity, AIS gap (dark activity), coverage, and IUU vessel list insights for one or more vessels over a date range. All four parameters are required. Multiple insight types can be requested in a single call.
 
 **Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity? }` — only fields corresponding to the requested `includes` types are present. `mapUrls` is an object keyed by vessel ID linking each vessel to its GFW map profile for the queried period — always show these URLs to the user in full, never truncate or shorten them.
+
 - `apparentFishing` (FISHING): `{ datasets, periodSelectedCounters: { events, eventsInRFMOWithoutKnownAuthorization, eventsInNoTakeMPAs }, eventsInRfmoWithoutKnownAuthorization[], eventsInNoTakeMpas[] }`
 - `gap` (GAP): `{ datasets, periodSelectedCounters: { events, eventsGapOff }, aisOff[] }`
 - `coverage` (COVERAGE): `{ blocks, blocksWithPositions, percentage }`
 - `vesselIdentity` (VESSEL-IDENTITY-IUU-VESSEL-LIST): `{ datasets, iuuVesselList: { valuesInThePeriod[], totalTimesListed, totalTimesListedInThePeriod } }`
 
 **When to use:**
+
 - Use `FISHING` to assess apparent fishing activity, including potential violations inside RFMOs without known authorization or inside no-take MPAs.
 - Use `GAP` to detect suspected dark activity — periods where the vessel stopped broadcasting AIS.
 - Use `COVERAGE` to assess how reliably the vessel was tracked via satellite AIS reception.
 - Use `VESSEL-IDENTITY-IUU-VESSEL-LIST` to check if the vessel appeared on any IUU (Illegal, Unreported, Unregulated) lists during the period.
 
 **Key constraints:**
+
 - All four parameters (`vesselIds`, `startDate`, `endDate`, `includes`) are required.
 - `vesselIds` must contain at least one ID. Use `vessel-by-id` or `vessel-search` first if you only have the vessel name or identifiers.
 
