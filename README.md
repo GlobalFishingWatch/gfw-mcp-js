@@ -441,6 +441,31 @@ npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids abc123 --start-date
 npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids abc123 def456 --start-date 2024-01-01 --end-date 2024-12-31 --includes FISHING GAP COVERAGE VESSEL-IDENTITY-IUU-VESSEL-LIST
 ```
 
+#### `screenshot`
+
+Generate a screenshot of a GFW map URL. Requires `playwright` and Chromium — install once if not already present:
+
+```bash
+npm install playwright && npx playwright install chromium
+```
+
+```bash
+node scripts/screenshot_gfw.js <url> <output_path>
+```
+
+| Argument | Description |
+| --- | --- |
+| `<url>` | The full GFW map URL (e.g. a `mapUrl` or `gfwMapUrl` from any tool response) |
+| `<output_path>` | Destination path for the PNG file (e.g. `/tmp/gfw_vessel_abc123.png`) |
+
+The script appends `&screenshotMode=true` to the URL, waits for network and JS idle, then saves a 1280×800 PNG. Respects `https_proxy` / `HTTPS_PROXY` / `http_proxy` / `HTTP_PROXY` environment variables.
+
+```bash
+node scripts/screenshot_gfw.js "https://globalfishingwatch.org/map/vessel/abc123" /tmp/gfw_vessel_abc123.png
+```
+
+---
+
 ### Output
 
 All commands output JSON to stdout, ready to pipe to `jq`:
