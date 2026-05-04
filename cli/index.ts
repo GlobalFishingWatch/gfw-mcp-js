@@ -241,6 +241,10 @@ program
     '--group-by <dim>',
     'Group by: VESSEL_ID | FLAG | GEARTYPE | FLAGANDGEARTYPE',
   )
+  .option(
+    '--top-vessels-limit <n>',
+    'Number of top vessels to return when group-by is VESSEL_ID (default 10)',
+  )
   .action((opts) =>
     run(() =>
       areaReport({
@@ -254,6 +258,7 @@ program
         speeds: opts.speeds,
         geartypes: opts.geartypes,
         groupBy: opts.groupBy as any,
+        topVesselsLimit: opts.topVesselsLimit !== undefined ? Number(opts.topVesselsLimit) : undefined,
       }),
     ),
   );

@@ -244,3 +244,62 @@ describe('areaReport — response aggregation', () => {
     expect(result.topVessels).toHaveLength(0);
   });
 });
+
+describe('areaReport — topVesselsLimit', () => {
+  function manyVessels(count: number) {
+    return Array.from({ length: count }, (_, i) =>
+      makeVesselRow({ vesselId: `v-${i}`, hours: count - i }),
+    );
+  }
+
+  it('defaults topVessels to 10 entries', async () => {
+    setupFetchMock(makeReportResponse(manyVessels(15)));
+    const result = await areaReport({
+      regionType: 'EEZ',
+      regionId: '8489',
+      startDate: '2024-01-01',
+      endDate: '2024-06-01',
+    }) as any;
+    expect(result.topVessels).toHaveLength(10);
+  });
+
+  it('respects topVesselsLimit when provided', async () => {
+    setupFetchMock(makeReportResponse(manyVessels(15)));
+    const result = await areaReport({
+      regionType: 'EEZ',
+      regionId: '8489',
+      startDate: '2024-01-01',
+      endDate: '2024-06-01',
+      topVesselsLimit: 3,
+    }) as any;
+    expect(result.topVessels).toHaveLength(3);
+    expect(result.topVessels[0].value).toBe(15);
+    expect(result.topVessels[2].value).toBe(13);
+  });
+
+  it('returns fewer than limit when not enough vessels exist', async () => {
+    setupFetchMock(makeReportResponse(manyVessels(2)));
+    const result = await areaReport({
+      regionType: 'EEZ',
+      regionId: '8489',
+      startDate: '2024-01-01',
+      endDate: '2024-06-01',
+      topVesselsLimit: 50,
+    }) as any;
+    expect(result.topVessels).toHaveLength(2);
+  });
+
+  it('ignores topVesselsLimit when groupBy is not VESSEL_ID', async () => {
+    setupFetchMock(makeReportResponse(manyVessels(15)));
+    const result = await areaReport({
+      regionType: 'EEZ',
+      regionId: '8489',
+      startDate: '2024-01-01',
+      endDate: '2024-06-01',
+      groupBy: 'FLAG',
+      topVesselsLimit: 3,
+    }) as any;
+    expect(result.topVessels).toBeUndefined();
+    expect(result.rows).toBeDefined();
+  });
+});

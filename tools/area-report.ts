@@ -22,6 +22,7 @@ export async function areaReport({
   speeds,
   geartypes,
   groupBy,
+  topVesselsLimit,
 }: {
   regionType: 'MPA' | 'EEZ' | 'RFMO';
   regionId: string;
@@ -33,9 +34,11 @@ export async function areaReport({
   speeds?: string[];
   geartypes?: string[];
   groupBy?: 'VESSEL_ID' | 'FLAG' | 'GEARTYPE' | 'FLAGANDGEARTYPE';
+  topVesselsLimit?: number;
 }) {
   const activityType: ActivityType = type ?? 'FISHING';
   const groupByValue = groupBy ?? 'VESSEL_ID';
+  const topLimit = topVesselsLimit ?? 10;
 
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -97,7 +100,7 @@ export async function areaReport({
     groupByValue === 'VESSEL_ID'
       ? [...(allRawRows as FishingEffortEntry[])]
           .sort((a, b) => getValue(b) - getValue(a))
-          .slice(0, 10)
+          .slice(0, topLimit)
           .map((row) => ({
             vesselId: row.vesselId,
             shipName: row.shipName,
@@ -275,6 +278,15 @@ export function register(server: McpServer) {
               '"FLAG": results aggregated by flag state. ' +
               '"GEARTYPE": results aggregated by gear type — only valid when type is "FISHING", "SAR", or "SENTINEL2". ' +
               '"FLAGANDGEARTYPE": results aggregated by flag state and gear type combined — only valid when type is "FISHING", "SAR", or "SENTINEL2".',
+          ),
+        topVesselsLimit: z
+          .number()
+          .int()
+          .min(1)
+          .max(100)
+          .optional()
+          .describe(
+            'Number of top vessels to return when groupBy is "VESSEL_ID". Default: 10. Ignored for other groupBy values.',
           ),
       },
       outputSchema: {

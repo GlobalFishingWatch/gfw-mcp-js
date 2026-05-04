@@ -381,6 +381,7 @@ npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --regio
   [--vessel-types <type> ...] # PRESENCE only
   [--speeds <range> ...]      # PRESENCE only
   [--group-by <VESSEL_ID|FLAG|GEARTYPE|FLAGANDGEARTYPE>]
+  [--top-vessels-limit <n>]   # VESSEL_ID group-by only (default 10)
 ```
 
 | Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                                |
@@ -393,6 +394,7 @@ npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --regio
 | `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                                            |
 | `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                                        |
 | `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`, `SAR`, or `SENTINEL2`)                                                                                                                                                                                                      |
+| `--top-vessels-limit`         | Integer 1–100; default `10`. Number of top vessels to return when `--group-by VESSEL_ID`. Ignored for other group-by values.                                                                                                                                                                                                                                   |
 
 ```bash
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31
@@ -411,7 +413,7 @@ npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 -
 
 And optionally:
 
-- `topVessels` — top 10 vessels sorted descending by activity, each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, and `value` (hours for FISHING/PRESENCE; detections for SAR/SENTINEL2). Only present when `--group-by VESSEL_ID`.
+- `topVessels` — top N vessels sorted descending by activity (N = `--top-vessels-limit`, default 10), each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, and `value` (hours for FISHING/PRESENCE; detections for SAR/SENTINEL2). Only present when `--group-by VESSEL_ID`.
 - `rows` — aggregated entries sorted descending by activity value, each containing the grouping fields plus `hours`. Only present when `--group-by FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
 - Applied filters (`flags`, `vesselTypes`, `speeds`, `geartypes`) echoed back when provided.
 

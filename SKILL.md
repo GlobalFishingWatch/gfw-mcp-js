@@ -248,6 +248,7 @@ npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --regio
   [--vessel-types <type> ...] # PRESENCE only
   [--speeds <range> ...]      # PRESENCE only
   [--group-by <VESSEL_ID|FLAG|GEARTYPE|FLAGANDGEARTYPE>]
+  [--top-vessels-limit <n>]   # VESSEL_ID group-by only (default 10)
 ```
 
 Date range must not exceed 1 year.
@@ -262,6 +263,7 @@ Date range must not exceed 1 year.
 | `--vessel-types`              | `carrier` \| `seismic_vessel` \| `passenger` \| `other` \| `support` \| `bunker` \| `gear` \| `cargo` \| `fishing` \| `discrepancy` (PRESENCE only)                                                                                                                                                                                                            |
 | `--speeds`                    | `2-4` \| `4-6` \| `6-10` \| `10-15` \| `15-25` \| `>25` (PRESENCE only)                                                                                                                                                                                                                                                                                        |
 | `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`, `SAR`, or `SENTINEL2`)                                                                                                                                                                                                      |
+| `--top-vessels-limit`         | Integer 1–100; default `10`. Number of top vessels to return when `--group-by VESSEL_ID`. Ignored for other group-by values.                                                                                                                                                                                                                                   |
 
 **Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` plus one activity value field:
 
@@ -271,7 +273,7 @@ Date range must not exceed 1 year.
 
 And optionally:
 
-- `topVessels` (top 10 sorted descending, each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `value`) — only when `--group-by VESSEL_ID`. `value` is hours for FISHING/PRESENCE, detections for SAR/SENTINEL2.
+- `topVessels` (top N sorted descending, where N = `--top-vessels-limit`, default 10; each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `value`) — only when `--group-by VESSEL_ID`. `value` is hours for FISHING/PRESENCE, detections for SAR/SENTINEL2.
 - `rows` (aggregated and sorted descending by hours) — only when `--group-by FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
 - Applied filters (`flags`, `vesselTypes`, `speeds`, `geartypes`) echoed back when provided.
 
@@ -414,7 +416,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 And optionally:
 
-- `topVessels` (top 10 sorted descending, with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `value`) — only when `groupBy` is `VESSEL_ID`. `value` is hours for FISHING/PRESENCE, detections for SAR/SENTINEL2.
+- `topVessels` (top N sorted descending, where N = `topVesselsLimit`, default 10; with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `value`) — only when `groupBy` is `VESSEL_ID`. `value` is hours for FISHING/PRESENCE, detections for SAR/SENTINEL2.
 - `rows` (aggregated entries sorted descending by hours, with grouping fields + `hours`) — only when `groupBy` is `FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
 - Applied filters echoed back when provided.
 
