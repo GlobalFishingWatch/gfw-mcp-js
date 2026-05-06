@@ -158,7 +158,15 @@ Manual config alternative — `~/.gemini/settings.json` (global) or `.gemini/set
 
 #### Claude Code (Skill)
 
-The repo ships a [SKILL.md](SKILL.md) at the root. Drop the repo into your Claude skills directory:
+The repo ships a [SKILL.md](SKILL.md) at the root.
+
+Install via [skills.sh](https://skills.sh) CLI (recommended):
+
+```bash
+npx skills add GlobalFishingWatch/gfw-mcp-js
+```
+
+Or clone directly into your Claude skills directory:
 
 ```bash
 git clone https://github.com/GlobalFishingWatch/gfw-mcp-js ~/.claude/skills/gfw-mcp-js
@@ -169,12 +177,12 @@ Claude Code auto-discovers `SKILL.md` and loads the agent guidelines plus tool r
 ### Alternative: local clone
 
 ```bash
-git clone https://github.com/globalfishingwatch/gfw-mcp
-cd gfw-mcp
+git clone https://github.com/globalfishingwatch/gfw-mcp-js
+cd gfw-mcp-js
 npm install && npm run build
 ```
 
-Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/gfw-mcp/dist/bin.js` in any config above.
+Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/gfw-mcp-js/dist/bin.js` in any config above.
 
 ### Available MCP tools
 
@@ -453,10 +461,10 @@ npm install playwright && npx playwright install chromium
 node scripts/screenshot_gfw.js <url> <output_path>
 ```
 
-| Argument | Description |
-| --- | --- |
-| `<url>` | The full GFW map URL (e.g. a `mapUrl` or `gfwMapUrl` from any tool response) |
-| `<output_path>` | Destination path for the PNG file (e.g. `/tmp/gfw_vessel_abc123.png`) |
+| Argument        | Description                                                                  |
+| --------------- | ---------------------------------------------------------------------------- |
+| `<url>`         | The full GFW map URL (e.g. a `mapUrl` or `gfwMapUrl` from any tool response) |
+| `<output_path>` | Destination path for the PNG file (e.g. `/tmp/gfw_vessel_abc123.png`)        |
 
 The script appends `&screenshotMode=true` to the URL, waits for network and JS idle, then saves a 1280×800 PNG. Respects `https_proxy` / `HTTPS_PROXY` / `http_proxy` / `HTTP_PROXY` environment variables.
 

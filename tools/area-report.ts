@@ -49,16 +49,33 @@ export async function areaReport({
     );
   }
 
-  if (activityType === 'PRESENCE' && (groupByValue === 'GEARTYPE' || groupByValue === 'FLAGANDGEARTYPE')) {
+  if (
+    activityType === 'PRESENCE' &&
+    (groupByValue === 'GEARTYPE' || groupByValue === 'FLAGANDGEARTYPE')
+  ) {
     return createErrorResponse(
       'groupBy "GEARTYPE" and "FLAGANDGEARTYPE" are only valid when type is "FISHING", "SAR", or "SENTINEL2".',
     );
   }
-  if ((activityType === 'FISHING' || activityType === 'SAR' || activityType === 'SENTINEL2') && Array.isArray(vesselTypes) && vesselTypes.length > 0) {
-    return createErrorResponse('vesselTypes filter is only valid when type is "PRESENCE".');
+  if (
+    (activityType === 'FISHING' ||
+      activityType === 'SAR' ||
+      activityType === 'SENTINEL2') &&
+    Array.isArray(vesselTypes) &&
+    vesselTypes.length > 0
+  ) {
+    return createErrorResponse(
+      'vesselTypes filter is only valid when type is "PRESENCE".',
+    );
   }
-  if (activityType === 'PRESENCE' && Array.isArray(geartypes) && geartypes.length > 0) {
-    return createErrorResponse('geartypes filter is only valid when type is "FISHING", "SAR", or "SENTINEL2".');
+  if (
+    activityType === 'PRESENCE' &&
+    Array.isArray(geartypes) &&
+    geartypes.length > 0
+  ) {
+    return createErrorResponse(
+      'geartypes filter is only valid when type is "FISHING", "SAR", or "SENTINEL2".',
+    );
   }
 
   const activityDataset = ACTIVITY_DATASETS[activityType];
@@ -68,10 +85,18 @@ export async function areaReport({
   const geartypeList = Array.isArray(geartypes) ? geartypes : [];
 
   const filters = [];
-  if (flagList.length > 0) filters.push(`flag IN (${flagList.map((f) => `'${f}'`).join(',')})`);
-  if (speedList.length > 0) filters.push(`speed IN (${speedList.map((s) => `'${s}'`).join(',')})`);
-  if (vesselTypeList.length > 0) filters.push(`vessel_type IN (${vesselTypeList.map((t) => `'${t}'`).join(',')})`);
-  if (geartypeList.length > 0) filters.push(`geartype IN (${geartypeList.map((g) => `'${g}'`).join(',')})`);
+  if (flagList.length > 0)
+    filters.push(`flag IN (${flagList.map((f) => `'${f}'`).join(',')})`);
+  if (speedList.length > 0)
+    filters.push(`speed IN (${speedList.map((s) => `'${s}'`).join(',')})`);
+  if (vesselTypeList.length > 0)
+    filters.push(
+      `vessel_type IN (${vesselTypeList.map((t) => `'${t}'`).join(',')})`,
+    );
+  if (geartypeList.length > 0)
+    filters.push(
+      `geartype IN (${geartypeList.map((g) => `'${g}'`).join(',')})`,
+    );
 
   const params: Record<string, string> = {
     format: 'JSON',
@@ -89,10 +114,14 @@ export async function areaReport({
   const data: ReportResponse = await response.json();
 
   const isSarType = activityType === 'SAR' || activityType === 'SENTINEL2';
-  const allRawRows = data.entries.flatMap((entry) => entry[activityDataset] ?? []);
+  const allRawRows = data.entries.flatMap(
+    (entry) => entry[activityDataset] ?? [],
+  );
 
   const getValue = (row: (typeof allRawRows)[number]): number =>
-    isSarType ? (row as { detections: number }).detections : (row as FishingEffortEntry).hours;
+    isSarType
+      ? (row as { detections: number }).detections
+      : (row as FishingEffortEntry).hours;
 
   const fishingHours = allRawRows.reduce((sum, row) => sum + getValue(row), 0);
 
@@ -113,17 +142,24 @@ export async function areaReport({
 
   const rows = (() => {
     if (groupByValue === 'VESSEL_ID') return undefined;
-    const aggregated = new Map<string, { key: Record<string, string | undefined>; hours: number }>();
+    const aggregated = new Map<
+      string,
+      { key: Record<string, string | undefined>; hours: number }
+    >();
     for (const row of allRawRows) {
       const r = row as FishingEffortEntry;
       const key =
-        groupByValue === 'FLAG' ? r.flag
-        : groupByValue === 'GEARTYPE' ? r.geartype
-        : `${r.flag}__${r.geartype}`;
+        groupByValue === 'FLAG'
+          ? r.flag
+          : groupByValue === 'GEARTYPE'
+            ? r.geartype
+            : `${r.flag}__${r.geartype}`;
       const keyFields: Record<string, string | undefined> =
-        groupByValue === 'FLAG' ? { flag: r.flag }
-        : groupByValue === 'GEARTYPE' ? { geartype: r.geartype }
-        : { flag: r.flag, geartype: r.geartype };
+        groupByValue === 'FLAG'
+          ? { flag: r.flag }
+          : groupByValue === 'GEARTYPE'
+            ? { geartype: r.geartype }
+            : { flag: r.flag, geartype: r.geartype };
       const existing = aggregated.get(key);
       if (existing) {
         existing.hours += getValue(row);
@@ -131,20 +167,31 @@ export async function areaReport({
         aggregated.set(key, { key: keyFields, hours: getValue(row) });
       }
     }
-    return [...aggregated.values()].sort((a, b) => b.hours - a.hours).map(({ key, hours }) => ({ ...key, hours }));
+    return [...aggregated.values()]
+      .sort((a, b) => b.hours - a.hours)
+      .map(({ key, hours }) => ({ ...key, hours }));
   })();
 
-  const gfwMapUrl = generateReportUrl(regionId, regionType, activityType, startDate, endDate, {
-    speed: speedList,
-    vesselType: vesselTypeList,
-    geartype: geartypeList,
-    flag: flagList,
-  });
+  const gfwMapUrl = generateReportUrl(
+    regionId,
+    regionType,
+    activityType,
+    startDate,
+    endDate,
+    {
+      speed: speedList,
+      vesselType: vesselTypeList,
+      geartype: geartypeList,
+      flag: flagList,
+    },
+  );
 
   const activityValue =
-    activityType === 'FISHING' ? { fishingHours }
-    : activityType === 'PRESENCE' ? { presenceHours: fishingHours }
-    : { detections: fishingHours };
+    activityType === 'FISHING'
+      ? { fishingHours }
+      : activityType === 'PRESENCE'
+        ? { presenceHours: fishingHours }
+        : { detections: fishingHours };
 
   return {
     regionType,
@@ -296,15 +343,21 @@ export function register(server: McpServer) {
         fishingHours: z
           .number()
           .optional()
-          .describe('Total fishing hours (AIS-based). Present when type is "FISHING".'),
+          .describe(
+            'Total fishing hours (AIS-based). Present when type is "FISHING".',
+          ),
         presenceHours: z
           .number()
           .optional()
-          .describe('Total vessel presence hours (AIS-based). Present when type is "PRESENCE".'),
+          .describe(
+            'Total vessel presence hours (AIS-based). Present when type is "PRESENCE".',
+          ),
         detections: z
           .number()
           .optional()
-          .describe('Total SAR or Sentinel-2 vessel detections. Present when type is "SAR" or "SENTINEL2".'),
+          .describe(
+            'Total SAR or Sentinel-2 vessel detections. Present when type is "SAR" or "SENTINEL2".',
+          ),
         flags: z
           .array(z.string().regex(/^[A-Z]{3}$/))
           .optional()
@@ -336,7 +389,11 @@ export function register(server: McpServer) {
               mmsi: z.string().nullish(),
               flag: z.string().nullish(),
               geartype: z.string().nullish(),
-              value: z.number().describe('Hours (FISHING/PRESENCE) or detections (SAR/SENTINEL2).'),
+              value: z
+                .number()
+                .describe(
+                  'Hours (FISHING/PRESENCE) or detections (SAR/SENTINEL2).',
+                ),
             }),
           )
           .optional()
@@ -355,13 +412,25 @@ export function register(server: McpServer) {
       try {
         const output = await areaReport(params);
         if ('isError' in output) return output;
-        const flagText = output.flags && output.flags.length > 0 ? `\nFlag Filters: ${output.flags.join(', ')}` : '';
+        const flagText =
+          output.flags && output.flags.length > 0
+            ? `\nFlag Filters: ${output.flags.join(', ')}`
+            : '';
         const activityType = params.type ?? 'FISHING';
-        const reportTitle = activityType === 'FISHING' ? 'Fishing Hours Report' : activityType === 'SAR' ? 'SAR Detections Report' : activityType === 'SENTINEL2' ? 'Sentinel-2 Detections Report' : 'Presence Hours Report';
+        const reportTitle =
+          activityType === 'FISHING'
+            ? 'Fishing Hours Report'
+            : activityType === 'SAR'
+              ? 'SAR Detections Report'
+              : activityType === 'SENTINEL2'
+                ? 'Sentinel-2 Detections Report'
+                : 'Presence Hours Report';
         const activitySummary =
-          activityType === 'FISHING' ? `Total Fishing Hours: ${output.fishingHours} hours`
-          : activityType === 'PRESENCE' ? `Total Presence Hours: ${output.presenceHours} hours`
-          : `Total Detections: ${output.detections}`;
+          activityType === 'FISHING'
+            ? `Total Fishing Hours: ${output.fishingHours} hours`
+            : activityType === 'PRESENCE'
+              ? `Total Presence Hours: ${output.presenceHours} hours`
+              : `Total Detections: ${output.detections}`;
         const responseText = `${reportTitle} for ${output.regionType} ID: ${output.regionId}${flagText}
 Date Range: ${output.dateRange.start} to ${output.dateRange.end}
 
@@ -369,12 +438,21 @@ ${activitySummary}
 
 View detailed data on the Global Fishing Watch map:
 ${output.gfwMapUrl}
-
 Full data: ${JSON.stringify(output, null, 2)}`;
-        return createToolResponse(responseText, output as unknown as Record<string, unknown>);
+        return createToolResponse(
+          responseText,
+          output as unknown as Record<string, unknown>,
+        );
       } catch (err) {
         const activityType = params.type ?? 'FISHING';
-        const activityLabel = activityType === 'FISHING' ? 'fishing' : activityType === 'SAR' ? 'SAR presence' : activityType === 'SENTINEL2' ? 'Sentinel-2 presence' : 'presence';
+        const activityLabel =
+          activityType === 'FISHING'
+            ? 'fishing'
+            : activityType === 'SAR'
+              ? 'SAR presence'
+              : activityType === 'SENTINEL2'
+                ? 'Sentinel-2 presence'
+                : 'presence';
         return createErrorResponse(
           `Failed to generate ${activityLabel} hours report: ${err instanceof Error ? err.message : String(err)}`,
         );

@@ -1,15 +1,10 @@
+import Fuse from 'fuse.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
+import { stemmed } from '../lib/search.js';
 import { ContextLayer, REGION_DATASETS } from '../lib/types.js';
-
-// Returns a simple similarity score: number of query words found in label
-function score(label: string, query: string): number {
-  const lowerLabel = label.toLowerCase();
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-  return words.filter((w) => lowerLabel.includes(w)).length;
-}
 
 export async function regionIdLookup({
   regionType,
@@ -26,15 +21,25 @@ export async function regionIdLookup({
   const response = await gfwFetch(`/v3/datasets/${dataset}/context-layers`);
   const layers: ContextLayer[] = await response.json();
 
-  const matches = layers
-    .map((layer) => ({ layer, s: score(layer.label, query) }))
-    .filter(({ s }) => s > 0)
-    .sort((a, b) => b.s - a.s)
+  const normalized = layers.map((layer) => ({
+    layer,
+    normLabel: stemmed(layer.label),
+  }));
+
+  const fuse = new Fuse(normalized, {
+    keys: ['normLabel'],
+    threshold: 0.3,
+    distance: 1000,
+    includeScore: true,
+  });
+
+  const matches = fuse
+    .search(stemmed(query))
     .slice(0, maxResults)
-    .map(({ layer }) => ({
-      id: String(layer.id),
-      name: layer.label,
-      country: layer.iso3 ?? undefined,
+    .map(({ item }) => ({
+      id: String(item.layer.id),
+      name: item.layer.label,
+      country: item.layer.iso3 ?? undefined,
       source: dataset,
     }));
 
