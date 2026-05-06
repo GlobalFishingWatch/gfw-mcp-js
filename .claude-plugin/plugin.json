@@ -1,0 +1,19 @@
+{
+  "name": "gfw-mcp",
+  "description": "Query Global Fishing Watch data — vessels, events, fishing hours, MPAs, EEZs, RFMOs",
+  "version": "0.3.4",
+  "author": {
+    "name": "Global Fishing Watch"
+  },
+  "homepage": "https://globalfishingwatch.org",
+  "repository": "https://github.com/GlobalFishingWatch/gfw-mcp-js",
+  "license": "Apache-2.0",
+  "env": [
+    {
+      "name": "GFW_TOKEN",
+      "description": "Global Fishing Watch API token — get one at https://globalfishingwatch.org/our-apis/tokens",
+      "sensitive": true,
+      "required": true
+    }
+  ]
+}

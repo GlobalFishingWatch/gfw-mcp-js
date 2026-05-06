@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gfw-mcp": {
+      "command": "npx",
+      "args": ["-y", "@globalfishingwatch/gfw-cli"],
+      "env": {
+        "GFW_TOKEN": "${GFW_TOKEN}"
+      }
+    }
+  }
+}

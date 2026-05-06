@@ -1,4 +1,4 @@
-# @globalfishingwatch/gfw-cli
+# @globalfishingwatch/gfw-mcp-js
 
 Access [Global Fishing Watch](https://globalfishingwatch.org) data from any MCP-compatible AI assistant or directly from the terminal. Search vessels, retrieve fishing and port-visit events, look up Marine Protected Areas, Exclusive Economic Zones and RFMOs, calculate fishing activity hours within any region, and compute aggregate event statistics.
 
@@ -55,7 +55,17 @@ If you have already run `npx @globalfishingwatch/gfw-cli auth login` from the CL
 }
 ```
 
-#### Claude Code
+#### Claude Code (Plugin — recommended)
+
+Install the plugin directly from this repository:
+
+```bash
+claude plugin install https://github.com/GlobalFishingWatch/gfw-mcp-js
+```
+
+Claude Code will prompt you for your `GFW_TOKEN` during installation and store it securely. The MCP server starts automatically on every session — no manual configuration needed.
+
+#### Claude Code (manual MCP)
 
 ```bash
 claude mcp add gfw -- npx -y @globalfishingwatch/gfw-cli mcp
@@ -156,11 +166,11 @@ Manual config alternative — `~/.gemini/settings.json` (global) or `.gemini/set
 }
 ```
 
-#### Claude Code (Skill)
+#### Claude Code (Skill only)
 
-The repo ships a [SKILL.md](SKILL.md) at the root.
+If you want the agent guidelines without the plugin, the repo ships a [SKILL.md](SKILL.md) at the root.
 
-Install via [skills.sh](https://skills.sh) CLI (recommended):
+Install via [skills.sh](https://skills.sh) CLI:
 
 ```bash
 npx skills add GlobalFishingWatch/gfw-mcp-js
@@ -186,16 +196,16 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 
 ### Available MCP tools
 
-| Tool               | Description                                                                                                                                                                                                      |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vessel-search`    | Search vessels by name, MMSI, IMO, callsign, flag, or gear type                                                                                                                                                  |
-| `vessel-by-id`     | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata and a map URL                                                                                                                                 |
-| `vessel-events`    | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                                                                     |
-| `events-stats`     | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events) |
-| `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                                                                          |
-| `region-geometry-url`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                        |
-| `area-report`      | Calculate fishing, SAR, Sentinel-2, or AIS presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype                             |
-| `vessel-insights`  | Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel                                                           |
+| Tool                  | Description                                                                                                                                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vessel-search`       | Search vessels by name, MMSI, IMO, callsign, flag, or gear type                                                                                                                                                  |
+| `vessel-by-id`        | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata and a map URL                                                                                                                                 |
+| `vessel-events`       | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                                                                     |
+| `events-stats`        | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events) |
+| `region-id-lookup`    | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                                                                          |
+| `region-geometry-url` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                        |
+| `area-report`         | Calculate fishing, SAR, Sentinel-2, or AIS presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype                             |
+| `vessel-insights`     | Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel                                                           |
 
 ---
 
