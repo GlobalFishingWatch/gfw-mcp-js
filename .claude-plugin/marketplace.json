@@ -1,0 +1,14 @@
+{
+  "name": "globalfishingwatch",
+  "owner": {
+    "name": "Global Fishing Watch",
+    "email": "info@globalfishingwatch.org"
+  },
+  "plugins": [
+    {
+      "name": "gfw",
+      "source": ".",
+      "description": "Query Global Fishing Watch data — search vessels, fishing events, MPAs, EEZs and RFMOs"
+    }
+  ]
+}
