@@ -2,12 +2,15 @@
   "name": "globalfishingwatch",
   "owner": {
     "name": "Global Fishing Watch",
-    "email": "info@globalfishingwatch.org"
+    "email": "dev@globalfishingwatch.org"
   },
   "plugins": [
     {
       "name": "gfw",
-      "source": ".",
+      "source": {
+        "source": "github",
+        "repo": "GlobalFishingWatch/gfw-mcp-js"
+      },
       "description": "Query Global Fishing Watch data — search vessels, fishing events, MPAs, EEZs and RFMOs"
     }
   ]
