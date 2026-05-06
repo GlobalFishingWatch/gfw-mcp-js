@@ -61,6 +61,9 @@ export async function vesselEvents({
   }
 
   const maxResults = limit ?? 20;
+  if (maxResults > 200) {
+    return createErrorResponse('Limit cannot exceed 200 results.');
+  }
   const pageOffset = offset ?? 0;
   const dataset = datasetsByType[eventType];
 
@@ -201,10 +204,10 @@ export function register(server: McpServer) {
           .number()
           .int()
           .min(1)
-          .max(100)
+          .max(200)
           .optional()
           .describe(
-            'Maximum number of events to return (default 20, max 100).',
+            'Maximum number of events to return (default 20, max 200).',
           ),
         offset: z
           .number()

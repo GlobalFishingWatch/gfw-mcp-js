@@ -5,7 +5,7 @@ import * as eventsStats from './tools/events-stats.js';
 import * as vesselSearch from './tools/vessel-search.js';
 import * as vesselById from './tools/vessel-by-id.js';
 import * as regionIdLookup from './tools/region-id-lookup.js';
-import * as regionGeometry from './tools/region-geometry.js';
+import * as regionGeometry from './tools/region-geometry-url.js';
 import * as areaReport from './tools/area-report.js';
 import * as vesselInsights from './tools/vessel-insights.js';
 

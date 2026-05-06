@@ -28,6 +28,10 @@ export async function vesselSearch({
 }) {
   const maxResults = limit ?? 10;
 
+  if (maxResults > 50) {
+    return createErrorResponse('Limit cannot exceed 50 results.');
+  }
+
   const conditions: string[] = [];
   if (callsign) conditions.push(`callsign = '${callsign.toUpperCase()}'`);
   if (flag) conditions.push(`flag = '${flag.toUpperCase()}'`);

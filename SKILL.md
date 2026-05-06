@@ -218,12 +218,12 @@ npx @globalfishingwatch/gfw-cli region-id-lookup --region-type <MPA|EEZ|RFMO> --
 - If more than one match is returned, ask the user which region they meant before proceeding.
 - The `id` from a match is what you pass as `--region-id` in other commands.
 
-#### region-geometry
+#### region-geometry-url
 
 Returns the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO. No API token required to fetch the geometry itself.
 
 ```bash
-npx @globalfishingwatch/gfw-cli region-geometry --region-type <MPA|EEZ|RFMO> --id <id>
+npx @globalfishingwatch/gfw-cli region-geometry-url --region-type <MPA|EEZ|RFMO> --id <id>
 ```
 
 | Parameter       | Format / values          |
@@ -395,7 +395,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ---
 
-### region-geometry
+### region-geometry-url
 
 **Purpose:** Returns the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO. No API token is required to call that URL.
 

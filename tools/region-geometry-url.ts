@@ -19,7 +19,7 @@ export function regionGeometry({
 
 export function register(server: McpServer) {
   server.registerTool(
-    'region-geometry',
+    'region-geometry-url',
     {
       title: 'Region Geometry URL',
       description:

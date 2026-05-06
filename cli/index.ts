@@ -6,7 +6,7 @@ import { vesselById } from '../tools/vessel-by-id.js';
 import { vesselEvents } from '../tools/vessel-events.js';
 import { eventsStats } from '../tools/events-stats.js';
 import { regionIdLookup } from '../tools/region-id-lookup.js';
-import { regionGeometry } from '../tools/region-geometry.js';
+import { regionGeometry } from '../tools/region-geometry-url.js';
 import { areaReport } from '../tools/area-report.js';
 import { vesselInsights } from '../tools/vessel-insights.js';
 
@@ -210,14 +210,14 @@ program
     ),
   );
 
-// ── region-geometry ───────────────────────────────────────────────────────────
+// ── region-geometry-url ───────────────────────────────────────────────────────
 program
-  .command('region-geometry')
+  .command('region-geometry-url')
   .description('Get the GeoJSON URL for an MPA, EEZ, or RFMO')
   .requiredOption('--region-type <type>', 'Region type: MPA | EEZ | RFMO')
   .requiredOption('--id <id>', 'Canonical region ID')
   .action((opts) => {
-    // region-geometry is synchronous, no API token needed
+    // region-geometry-url is synchronous, no API token needed
     print(regionGeometry({ regionType: opts.regionType as any, id: opts.id }));
   });
 

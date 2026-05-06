@@ -193,7 +193,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | `vessel-events`    | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                                                                     |
 | `events-stats`     | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events) |
 | `region-id-lookup` | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                                                                          |
-| `region-geometry`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                        |
+| `region-geometry-url`  | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                        |
 | `area-report`      | Calculate fishing, SAR, Sentinel-2, or AIS presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype                             |
 | `vessel-insights`  | Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel                                                           |
 
@@ -357,12 +357,12 @@ npx @globalfishingwatch/gfw-cli region-id-lookup --region-type EEZ --query "Pata
 npx @globalfishingwatch/gfw-cli region-id-lookup --region-type RFMO --query "WCPFC"
 ```
 
-#### `region-geometry`
+#### `region-geometry-url`
 
 Get the GeoJSON URL for a specific region (no API token required).
 
 ```bash
-npx @globalfishingwatch/gfw-cli region-geometry --region-type <MPA|EEZ|RFMO> --id <id>
+npx @globalfishingwatch/gfw-cli region-geometry-url --region-type <MPA|EEZ|RFMO> --id <id>
 ```
 
 | Parameter       | Format / values          |
@@ -370,8 +370,8 @@ npx @globalfishingwatch/gfw-cli region-geometry --region-type <MPA|EEZ|RFMO> --i
 | `--region-type` | `MPA` \| `EEZ` \| `RFMO` |
 
 ```bash
-npx @globalfishingwatch/gfw-cli region-geometry --region-type EEZ --id 8386
-npx @globalfishingwatch/gfw-cli region-geometry --region-type MPA --id 12345
+npx @globalfishingwatch/gfw-cli region-geometry-url --region-type EEZ --id 8386
+npx @globalfishingwatch/gfw-cli region-geometry-url --region-type MPA --id 12345
 ```
 
 #### `area-report`
