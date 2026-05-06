@@ -57,13 +57,15 @@ If you have already run `npx @globalfishingwatch/gfw-cli auth login` from the CL
 
 #### Claude Code (Plugin — recommended)
 
-Install the plugin directly from this repository:
+First add the GFW marketplace, then install the plugin:
 
 ```bash
-claude plugin install https://github.com/GlobalFishingWatch/gfw-mcp-js
-```
+# 1. Add the GFW marketplace (one-time)
+/plugin marketplace add GlobalFishingWatch/gfw-mcp-js
 
-Claude Code will prompt you for your `GFW_TOKEN` during installation and store it securely. The MCP server starts automatically on every session — no manual configuration needed.
+# 2. Install the plugin (will prompt for your GFW API token)
+claude plugin install gfw@globalfishingwatch
+```
 
 #### Claude Code (manual MCP)
 
