@@ -1,6 +1,6 @@
 {
   "name": "@globalfishingwatch/gfw-cli",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "MCP server for Global Fishing Watch data — vessel search, events, fishing hours, and region lookups",
   "author": "Global Fishing Watch",
   "license": "Apache-2.0",
