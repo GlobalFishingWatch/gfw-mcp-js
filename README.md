@@ -206,7 +206,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | `events-stats`        | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events) |
 | `region-id-lookup`    | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                                                                          |
 | `region-geometry-url` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                        |
-| `area-report`         | Calculate fishing, SAR, Sentinel-2, or AIS presence hours in a region (MPA, EEZ, RFMO) with optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype                             |
+| `area-report`         | Calculate fishing, SAR, Sentinel-2, or AIS presence hours worldwide (`regionWorld: true`) or in a specific region (MPA, EEZ, RFMO); optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
 | `vessel-insights`     | Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel                                                           |
 
 ---
@@ -389,11 +389,12 @@ npx @globalfishingwatch/gfw-cli region-geometry-url --region-type MPA --id 12345
 
 #### `area-report`
 
-Calculate fishing, SAR, Sentinel-2, or AIS presence hours inside a region. Date range must not exceed 1 year.
+Calculate fishing, SAR, Sentinel-2, or AIS presence hours inside a region or worldwide. Date range must not exceed 1 year.
 
 > **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
 ```bash
+# Region-specific report
 npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --region-id <id>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
   [--type <FISHING|PRESENCE|SAR|SENTINEL2>]
@@ -403,11 +404,19 @@ npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --regio
   [--speeds <range> ...]      # PRESENCE only
   [--group-by <VESSEL_ID|FLAG|GEARTYPE|FLAGANDGEARTYPE>]
   [--top-vessels-limit <n>]   # VESSEL_ID group-by only (default 10)
+
+# World report (mutually exclusive with --region-type / --region-id)
+npx @globalfishingwatch/gfw-cli area-report --region-world
+  --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
+  [--type <FISHING|PRESENCE|SAR|SENTINEL2>]
+  [--flags <ISO3> ...] [--geartypes <type> ...] [--group-by <...>]
 ```
 
 | Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                                |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                                       |
+| `--region-world`              | Boolean flag. Run the report for the entire world. Mutually exclusive with `--region-type` and `--region-id`.                                                                                                                                                                                                                                                  |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`. Required when `--region-world` is not set.                                                                                                                                                                                                                                                                                          |
+| `--region-id`                 | Canonical region ID. Required when `--region-world` is not set.                                                                                                                                                                                                                                                                                                |
 | `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                               |
 | `--type`                      | `FISHING` (default) \| `PRESENCE` \| `SAR` \| `SENTINEL2` — `FISHING`: AIS-based fishing effort hours; `PRESENCE`: AIS vessel presence hours regardless of activity; `SAR`: Synthetic Aperture Radar vessel detection hours (satellite radar, independent of AIS); `SENTINEL2`: Sentinel-2 optical satellite imagery vessel detection hours                    |
 | `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                                         |
@@ -424,9 +433,10 @@ npx @globalfishingwatch/gfw-cli area-report --region-type RFMO --region-id WCPFC
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type PRESENCE --vessel-types fishing cargo
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type SAR
 npx @globalfishingwatch/gfw-cli area-report --region-type EEZ --region-id 8386 --start-date 2024-01-01 --end-date 2024-12-31 --type SENTINEL2
+npx @globalfishingwatch/gfw-cli area-report --region-world --start-date 2024-01-01 --end-date 2024-12-31 --type FISHING --group-by FLAG
 ```
 
-**Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` plus one activity value field:
+**Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` for region reports, or `{ regionWorld: true, dateRange, gfwMapUrl }` for world reports, plus one activity value field:
 
 - `fishingHours` — total fishing hours (present when `--type FISHING`)
 - `presenceHours` — total vessel presence hours (present when `--type PRESENCE`)

@@ -17,8 +17,8 @@ const REGIONS_DATAVIEW_INSTANCES = {
 const GFW_BASE_URL = 'https://globalfishingwatch.org/map';
 
 export function generateReportUrl(
-  regionId: string,
-  regionType: keyof typeof REGION_DATASETS,
+  regionId: string | null,
+  regionType: keyof typeof REGION_DATASETS | null,
   type: keyof typeof DATA_DATAVIEW_INSTANCES,
   startDate: string,
   endDate: string,
@@ -33,7 +33,11 @@ export function generateReportUrl(
 ): string {
   const baseUrl = '/fishing-activity/default-public';
 
-  let dynamicPath = `/report/${REGION_DATASETS[regionType]}/${regionId}?reportLoadVessels=true&start=${startDate}&end=${endDate}`;
+  const regionSegment =
+    regionId && regionType
+      ? `/report/${REGION_DATASETS[regionType]}/${regionId}`
+      : '/report';
+  let dynamicPath = `${regionSegment}?reportLoadVessels=true&start=${startDate}&end=${endDate}`;
   const filtersCfg: any = {};
 
   const dataviewAIS = {
@@ -70,20 +74,12 @@ export function generateReportUrl(
       vis: false,
     },
   };
-  const dataviewRegion = {
-    id: REGIONS_DATAVIEW_INSTANCES[regionType],
-    cfg: {
-      vis: true,
-    },
-  };
-  console.error(
-    'object',
-    JSON.stringify({
-      dvIn: [dataviewAIS, dataviewVMS, dataviewPresence, dataviewSAR, dataviewSentinel2, dataviewRegion],
-    }),
-  );
+  const regionDataviews =
+    regionType
+      ? [{ id: REGIONS_DATAVIEW_INSTANCES[regionType], cfg: { vis: true } }]
+      : [];
   const dataviewInstances = stringify(
-    { dvIn: [dataviewAIS, dataviewVMS, dataviewPresence, dataviewSAR, dataviewSentinel2, dataviewRegion] },
+    { dvIn: [dataviewAIS, dataviewVMS, dataviewPresence, dataviewSAR, dataviewSentinel2, ...regionDataviews] },
     { arrayFormat: 'indices' },
   );
   dynamicPath += `&${dataviewInstances}`;

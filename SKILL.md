@@ -237,11 +237,12 @@ npx @globalfishingwatch/gfw-cli region-geometry-url --region-type <MPA|EEZ|RFMO>
 
 #### area-report
 
-Calculate fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Optionally filter by flag, gear type, vessel type, or speed, and group results by vessel, flag, or gear type.
+Calculate fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) or worldwide for a given date range. Optionally filter by flag, gear type, vessel type, or speed, and group results by vessel, flag, or gear type.
 
 > **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
 ```bash
+# Region-specific report
 npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --region-id <id>
   --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
   [--type <FISHING|PRESENCE|SAR|SENTINEL2>]
@@ -251,13 +252,21 @@ npx @globalfishingwatch/gfw-cli area-report --region-type <MPA|EEZ|RFMO> --regio
   [--speeds <range> ...]      # PRESENCE only
   [--group-by <VESSEL_ID|FLAG|GEARTYPE|FLAGANDGEARTYPE>]
   [--top-vessels-limit <n>]   # VESSEL_ID group-by only (default 10)
+
+# World report (mutually exclusive with --region-type / --region-id)
+npx @globalfishingwatch/gfw-cli area-report --region-world
+  --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>
+  [--type <FISHING|PRESENCE|SAR|SENTINEL2>]
+  [--flags <ISO3> ...] [--geartypes <type> ...] [--group-by <...>]
 ```
 
 Date range must not exceed 1 year.
 
 | Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                                |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`                                                                                                                                                                                                                                                                                                                                       |
+| `--region-world`              | Boolean flag. Run the report for the entire world. Mutually exclusive with `--region-type` and `--region-id`.                                                                                                                                                                                                                                                  |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`. Required when `--region-world` is not set.                                                                                                                                                                                                                                                                                          |
+| `--region-id`                 | Canonical region ID. Required when `--region-world` is not set.                                                                                                                                                                                                                                                                                                |
 | `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                               |
 | `--type`                      | `FISHING` (default) \| `PRESENCE` \| `SAR` \| `SENTINEL2` — `FISHING`: AIS-based fishing effort hours; `PRESENCE`: AIS vessel presence hours regardless of activity; `SAR`: Synthetic Aperture Radar vessel detection hours (satellite radar, independent of AIS); `SENTINEL2`: Sentinel-2 optical satellite imagery vessel detection hours                    |
 | `--flags`                     | ISO 3166-1 alpha-3 codes (e.g. `ESP`, `CHN`); up to 10                                                                                                                                                                                                                                                                                                         |
@@ -267,7 +276,7 @@ Date range must not exceed 1 year.
 | `--group-by`                  | `VESSEL_ID` (default) \| `FLAG` \| `GEARTYPE` \| `FLAGANDGEARTYPE` (`GEARTYPE`/`FLAGANDGEARTYPE` only valid with `--type FISHING`, `SAR`, or `SENTINEL2`)                                                                                                                                                                                                      |
 | `--top-vessels-limit`         | Integer 1–100; default `10`. Number of top vessels to return when `--group-by VESSEL_ID`. Ignored for other group-by values.                                                                                                                                                                                                                                   |
 
-**Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` plus one activity value field:
+**Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` for region reports, or `{ regionWorld: true, dateRange, gfwMapUrl }` for world reports, plus one activity value field:
 
 - `fishingHours` — total fishing hours (present when `--type FISHING`)
 - `presenceHours` — total vessel presence hours (present when `--type PRESENCE`)
@@ -408,9 +417,9 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ### area-report
 
-**Purpose:** Calculate total fishing, SAR, Sentinel-2, or AIS vessel presence hours inside a region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
+**Purpose:** Calculate total fishing, SAR, Sentinel-2, or AIS vessel presence hours either worldwide or inside a specific region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
 
-**Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` plus one activity value field:
+**Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` for region reports, or `{ regionWorld: true, dateRange, gfwMapUrl }` for world reports, plus one activity value field:
 
 - `fishingHours` — total fishing hours (present when `type` is `FISHING`)
 - `presenceHours` — total vessel presence hours (present when `type` is `PRESENCE`)
@@ -428,10 +437,13 @@ And optionally:
 - Use `type: PRESENCE` for questions about vessel traffic or transit: hours when any vessel was inside the region regardless of activity.
 - Use `type: SAR` for questions about SAR-detected vessel activity: satellite radar detections independent of AIS, useful for detecting vessels not broadcasting AIS.
 - Use `type: SENTINEL2` for questions about Sentinel-2 optically detected vessel activity: satellite optical imagery detections independent of AIS.
+- Use `regionWorld: true` for global-scale questions not scoped to any specific region — omit `regionType` and `regionId` in that case.
 
 **Key constraints:**
 
 - **Never call in parallel.** If multiple reports are needed, call them sequentially.
+- `regionWorld` and `regionType`/`regionId` are mutually exclusive — provide one or the other, never both.
+- When `regionWorld` is not set, both `regionType` and `regionId` are required.
 - Date range cannot exceed 1 year.
 - `geartypes` filter and `GEARTYPE`/`FLAGANDGEARTYPE` group-by are only valid with `type: FISHING`, `type: SAR`, or `type: SENTINEL2`.
 - `vesselTypes` and `speeds` filters are only valid with `type: PRESENCE`.

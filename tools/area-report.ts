@@ -14,6 +14,7 @@ import {
 export async function areaReport({
   regionType,
   regionId,
+  regionWorld,
   startDate,
   endDate,
   type,
@@ -24,8 +25,9 @@ export async function areaReport({
   groupBy,
   topVesselsLimit,
 }: {
-  regionType: 'MPA' | 'EEZ' | 'RFMO';
-  regionId: string;
+  regionType?: 'MPA' | 'EEZ' | 'RFMO';
+  regionId?: string;
+  regionWorld?: boolean;
   startDate: string;
   endDate: string;
   type?: 'FISHING' | 'PRESENCE' | 'SAR' | 'SENTINEL2';
@@ -36,6 +38,17 @@ export async function areaReport({
   groupBy?: 'VESSEL_ID' | 'FLAG' | 'GEARTYPE' | 'FLAGANDGEARTYPE';
   topVesselsLimit?: number;
 }) {
+  if (regionWorld && (regionType || regionId)) {
+    return createErrorResponse(
+      'regionWorld cannot be combined with regionType or regionId. Use one or the other.',
+    );
+  }
+  if (!regionWorld && (!regionType || !regionId)) {
+    return createErrorResponse(
+      'regionType and regionId are required when regionWorld is not set to true.',
+    );
+  }
+
   const activityType: ActivityType = type ?? 'FISHING';
   const groupByValue = groupBy ?? 'VESSEL_ID';
   const topLimit = topVesselsLimit ?? 10;
@@ -104,10 +117,14 @@ export async function areaReport({
     'date-range': `${startDate}T00:00:00.000Z,${endDate}T23:59:59.999Z`,
     'spatial-aggregation': 'true',
     'temporal-resolution': 'ENTIRE',
-    'region-id': regionId,
-    'region-dataset': REGION_DATASETS[regionType],
     'group-by': groupByValue,
   };
+  if (regionWorld) {
+    params['region-world'] = 'true';
+  } else if (regionId && regionType) {
+    params['region-id'] = regionId;
+    params['region-dataset'] = REGION_DATASETS[regionType];
+  }
   if (filters.length > 0) params['filters[0]'] = filters.join(' AND ');
 
   const response = await gfwFetch('/v3/4wings/report', params);
@@ -173,8 +190,8 @@ export async function areaReport({
   })();
 
   const gfwMapUrl = generateReportUrl(
-    regionId,
-    regionType,
+    regionId ?? null,
+    regionType ?? null,
     activityType,
     startDate,
     endDate,
@@ -194,8 +211,7 @@ export async function areaReport({
         : { detections: fishingHours };
 
   return {
-    regionType,
-    regionId,
+    ...(regionWorld ? { regionWorld: true } : { regionType, regionId }),
     dateRange: { start: startDate, end: endDate },
     ...activityValue,
     ...(topVessels && { topVessels }),
@@ -214,17 +230,25 @@ export function register(server: McpServer) {
     {
       title: 'Activity Hours Calculator',
       description:
-        'Returns the number of activity hours for a given time period in a specific Marine Protected Area (MPA), Exclusive Economic Zone (EEZ), or Regional Fisheries Management Organisation (RFMO) identified by its canonical region ID. Use the Region ID Lookup tool first if you only know the human-readable name. Optionally filters by one or multiple vessel flag states. This tool calculates and reports the total fishing activity hours detected within the region boundaries during the specified date range. The tool also provides a link to the Global Fishing Watch (GFW) map where users can view the detailed data and navigate the fishing activity visually. IMPORTANT: This tool must NEVER be called in parallel. If multiple reports are needed, call this tool sequentially, one at a time, waiting for each result before making the next call. IMPORTANT: The gfwMapUrl returned by this tool must NEVER be truncated, shortened, or summarized — always display it in its entirety.',
+        'Returns the number of activity hours for a given time period either worldwide or within a specific Marine Protected Area (MPA), Exclusive Economic Zone (EEZ), or Regional Fisheries Management Organisation (RFMO). For a specific region, provide regionType and regionId (use the Region ID Lookup tool if you only have the name). For a global report covering the entire world, set regionWorld to true and omit regionType and regionId — these two modes are mutually exclusive. Optionally filters by vessel flag states, gear types, vessel types, and speeds. The tool also provides a link to the Global Fishing Watch (GFW) map where users can view the detailed data visually. IMPORTANT: This tool must NEVER be called in parallel. If multiple reports are needed, call this tool sequentially, one at a time, waiting for each result before making the next call. IMPORTANT: The gfwMapUrl returned by this tool must NEVER be truncated, shortened, or summarized — always display it in its entirety.',
       inputSchema: {
+        regionWorld: z
+          .boolean()
+          .optional()
+          .describe(
+            'Set to true to run the report for the entire world instead of a specific region. Mutually exclusive with regionType and regionId — do not provide regionType or regionId when this is true.',
+          ),
         regionType: z
           .enum(['MPA', 'EEZ', 'RFMO'])
+          .optional()
           .describe(
-            'Type of region to analyze: MPA (Marine Protected Area), EEZ (Exclusive Economic Zone), or RFMO (Regional Fisheries Management Organisation)',
+            'Type of region to analyze: MPA (Marine Protected Area), EEZ (Exclusive Economic Zone), or RFMO (Regional Fisheries Management Organisation). Required when regionWorld is not true.',
           ),
         regionId: z
           .string()
+          .optional()
           .describe(
-            'Canonical ID of the region (MPA, EEZ, or RFMO). Use the Region ID Lookup tool if you only have the name.',
+            'Canonical ID of the region (MPA, EEZ, or RFMO). Use the Region ID Lookup tool if you only have the name. Required when regionWorld is not true.',
           ),
         startDate: z
           .string()
@@ -337,8 +361,12 @@ export function register(server: McpServer) {
           ),
       },
       outputSchema: {
-        regionType: z.enum(['MPA', 'EEZ', 'RFMO']),
-        regionId: z.string(),
+        regionWorld: z
+          .boolean()
+          .optional()
+          .describe('True when the report covers the entire world.'),
+        regionType: z.enum(['MPA', 'EEZ', 'RFMO']).optional(),
+        regionId: z.string().optional(),
         dateRange: z.object({ start: z.string(), end: z.string() }),
         fishingHours: z
           .number()
@@ -431,7 +459,11 @@ export function register(server: McpServer) {
             : activityType === 'PRESENCE'
               ? `Total Presence Hours: ${output.presenceHours} hours`
               : `Total Detections: ${output.detections}`;
-        const responseText = `${reportTitle} for ${output.regionType} ID: ${output.regionId}${flagText}
+        const regionLabel =
+          'regionWorld' in output
+            ? 'World'
+            : `${'regionType' in output ? output.regionType : ''} ID: ${'regionId' in output ? output.regionId : ''}`;
+        const responseText = `${reportTitle} for ${regionLabel}${flagText}
 Date Range: ${output.dateRange.start} to ${output.dateRange.end}
 
 ${activitySummary}
