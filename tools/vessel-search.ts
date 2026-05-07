@@ -13,6 +13,7 @@ export async function vesselSearch({
   imo,
   callsign,
   flag,
+  owner,
   activeFrom,
   activeTo,
   limit,
@@ -22,6 +23,7 @@ export async function vesselSearch({
   imo?: string;
   callsign?: string;
   flag?: string;
+  owner?: string;
   activeFrom?: string;
   activeTo?: string;
   limit?: number;
@@ -42,6 +44,8 @@ export async function vesselSearch({
   if (activeFrom)
     conditions.push(`transmissionDateTo > '${activeFrom}T00:00:00Z'`);
   if (name) conditions.push(`shipname LIKE '*${name.toUpperCase()}*'`);
+  if (owner)
+    conditions.push(`registryOwners.name LIKE '*${owner.toUpperCase()}*'`);
 
   if (conditions.length === 0) {
     return createErrorResponse(
@@ -112,6 +116,14 @@ export function register(server: McpServer) {
           .trim()
           .optional()
           .describe('Vessel radio callsign (exact match).'),
+        owner: z
+          .string()
+          .trim()
+          .min(1)
+          .optional()
+          .describe(
+            'Vessel owner name or partial name (case-sensitive wildcard match).',
+          ),
         flag: z
           .string()
           .regex(

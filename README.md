@@ -200,7 +200,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 
 | Tool                  | Description                                                                                                                                                                                                      |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vessel-search`       | Search vessels by name, MMSI, IMO, callsign, flag, or gear type                                                                                                                                                  |
+| `vessel-search`       | Search vessels by name, MMSI, IMO, callsign, flag, owner, or gear type                                                                                                                                           |
 | `vessel-by-id`        | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata and a map URL                                                                                                                                 |
 | `vessel-events`       | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                                                                     |
 | `events-stats`        | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events) |
@@ -253,12 +253,12 @@ GFW_TOKEN=your_key npx @globalfishingwatch/gfw-cli vessel-search --name "Maria"
 
 #### `vessel-search`
 
-Search vessels by name, MMSI, IMO, callsign, flag, or activity date range.
+Search vessels by name, MMSI, IMO, callsign, flag, owner, or activity date range.
 
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-search [--name <name>] [--mmsi <mmsi>] [--imo <imo>]
-  [--callsign <cs>] [--flag <ISO3>] [--active-from <YYYY-MM-DD>]
-  [--active-to <YYYY-MM-DD>] [--limit <n>]
+  [--callsign <cs>] [--flag <ISO3>] [--owner <owner>]
+  [--active-from <YYYY-MM-DD>] [--active-to <YYYY-MM-DD>] [--limit <n>]
 ```
 
 At least one filter must be provided.
@@ -268,6 +268,7 @@ At least one filter must be provided.
 | `--mmsi`                        | 9-digit string                                     |
 | `--imo`                         | 7-digit string                                     |
 | `--flag`                        | ISO 3166-1 alpha-3 code (e.g. `ESP`, `CHN`, `USA`) |
+| `--owner`                       | Owner name or partial name (wildcard match)        |
 | `--active-from` / `--active-to` | `YYYY-MM-DD`                                       |
 | `--limit`                       | 1–50 (default 10)                                  |
 

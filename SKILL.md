@@ -72,12 +72,12 @@ GFW_TOKEN=your_key npx @globalfishingwatch/gfw-cli vessel-search --name "Maria"
 
 #### vessel-search
 
-Search vessels by name, MMSI, IMO, callsign, flag, gear type, or activity date range. At least one filter must be provided.
+Search vessels by name, MMSI, IMO, callsign, flag, owner, gear type, or activity date range. At least one filter must be provided.
 
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-search [--name <name>] [--mmsi <mmsi>] [--imo <imo>]
-  [--callsign <cs>] [--flag <ISO3>] [--active-from <YYYY-MM-DD>]
-  [--active-to <YYYY-MM-DD>] [--limit <n>]
+  [--callsign <cs>] [--flag <ISO3>] [--owner <owner>]
+  [--active-from <YYYY-MM-DD>] [--active-to <YYYY-MM-DD>] [--limit <n>]
 ```
 
 | Parameter                       | Format / values                                    |
@@ -85,6 +85,7 @@ npx @globalfishingwatch/gfw-cli vessel-search [--name <name>] [--mmsi <mmsi>] [-
 | `--mmsi`                        | 9-digit string                                     |
 | `--imo`                         | 7-digit string                                     |
 | `--flag`                        | ISO 3166-1 alpha-3 code (e.g. `ESP`, `CHN`, `USA`) |
+| `--owner`                       | Owner name or partial name (wildcard match)        |
 | `--active-from` / `--active-to` | `YYYY-MM-DD`                                       |
 | `--limit`                       | 1–50 (default 10)                                  |
 
@@ -314,7 +315,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ### vessel-search
 
-**Purpose:** Search vessels by name, MMSI, IMO, callsign, flag state, or activity date range. At least one filter must be provided.
+**Purpose:** Search vessels by name, MMSI, IMO, callsign, flag state, owner, or activity date range. At least one filter must be provided.
 
 **Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, and `mapUrl` (link to the vessel's profile on the GFW map — always show it to the user).
 
