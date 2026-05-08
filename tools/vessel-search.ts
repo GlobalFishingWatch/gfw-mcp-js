@@ -57,6 +57,7 @@ export async function vesselSearch({
     'datasets[0]': DATASET,
     limit: String(maxResults),
     where: conditions.join(' AND '),
+    'includes[0]': 'OWNERSHIP',
   };
 
   const response = await gfwFetch('/v3/vessels/search', params);
@@ -78,6 +79,7 @@ export async function vesselSearch({
       gearType: combined?.geartypes?.[0]?.name,
       activeFrom: from,
       activeTo: to,
+      registryOwners: entry.registryOwners ?? [],
       mapUrl: vesselId ? generateVesselProfileUrl(vesselId, from, to) : null,
     };
   });
@@ -176,6 +178,16 @@ export function register(server: McpServer) {
             gearType: z.string().nullish(),
             activeFrom: z.string().nullish(),
             activeTo: z.string().nullish(),
+            registryOwners: z.array(
+              z.object({
+                name: z.string(),
+                flag: z.string(),
+                ssvid: z.string(),
+                sourceCode: z.array(z.string()),
+                dateFrom: z.string(),
+                dateTo: z.string(),
+              }),
+            ),
             mapUrl: z
               .string()
               .nullish()

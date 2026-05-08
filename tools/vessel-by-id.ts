@@ -32,6 +32,7 @@ export async function vesselById({ ids }: { ids: string[] }) {
       gearType: combined?.geartypes?.[0]?.name,
       activeFrom: from,
       activeTo: to,
+      registryOwners: entry.registryOwners ?? [],
       mapUrl: vesselId ? generateVesselProfileUrl(vesselId, from, to) : null,
     };
   });
@@ -65,6 +66,16 @@ export function register(server: McpServer) {
             gearType: z.string().nullish(),
             activeFrom: z.string().nullish(),
             activeTo: z.string().nullish(),
+            registryOwners: z.array(
+              z.object({
+                name: z.string(),
+                flag: z.string(),
+                ssvid: z.string(),
+                sourceCode: z.array(z.string()),
+                dateFrom: z.string(),
+                dateTo: z.string(),
+              }),
+            ),
             mapUrl: z
               .string()
               .nullish()

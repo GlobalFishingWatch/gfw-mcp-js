@@ -1,12 +1,13 @@
 const { chromium } = require('playwright');
 const path = require('path');
 
-const [, , url, outPath] = process.argv;
+let [, , url, outPath] = process.argv;
 
 if (!url || !outPath) {
   console.error('Usage: node screenshot_gfw.js <url> <output_path>');
   process.exit(1);
 }
+url = url.replace('reportLoadVessels=true', 'reportLoadVessels=false');
 
 (async () => {
   const proxyUrl =
@@ -31,13 +32,18 @@ if (!url || !outPath) {
     let newRequestFired;
     do {
       newRequestFired = false;
-      const onRequest = () => { newRequestFired = true; };
+      const onRequest = () => {
+        newRequestFired = true;
+      };
       page.on('request', onRequest);
       await page.waitForLoadState('networkidle');
       page.off('request', onRequest);
       if (!newRequestFired) {
         await page.evaluate(
-          () => new Promise(resolve => requestIdleCallback(resolve, { timeout: 10000 }))
+          () =>
+            new Promise((resolve) =>
+              requestIdleCallback(resolve, { timeout: 10000 }),
+            ),
         );
         await page.waitForTimeout(1000);
       }
@@ -56,8 +62,9 @@ if (!url || !outPath) {
       fullPage: false,
       timeout: 180000,
     });
-    console.log(`Saved: ${resolvedPath} (${((Date.now() - start) / 1000).toFixed(1)}s)`);
-    
+    console.log(
+      `Saved: ${resolvedPath} (${((Date.now() - start) / 1000).toFixed(1)}s)`,
+    );
   } catch (e) {
     console.error(`Failed: ${e.message}`);
     process.exit(1);

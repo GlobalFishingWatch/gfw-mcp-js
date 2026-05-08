@@ -31,6 +31,15 @@ export type ContextLayer = {
   territory1: string | null;
 };
 
+export type RegistryOwner = {
+  name: string;
+  flag: string;
+  ssvid: string;
+  sourceCode: string[];
+  dateFrom: string;
+  dateTo: string;
+};
+
 export type VesselEntry = {
   dataset: string;
   selfReportedInfo: {
@@ -49,6 +58,7 @@ export type VesselEntry = {
     geartypes: { name: string }[];
     shiptypes: { name: string }[];
   }[];
+  registryOwners?: RegistryOwner[];
 };
 
 export type VesselSearchResponse = {

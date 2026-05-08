@@ -90,7 +90,7 @@ npx @globalfishingwatch/gfw-cli vessel-search [--name <name>] [--mmsi <mmsi>] [-
 | `--active-from` / `--active-to` | `YYYY-MM-DD`                                       |
 | `--limit`                       | 1–50 (default 10)                                  |
 
-**Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, and `mapUrl`.
+**Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `registryOwners` (array of `{ name, flag, ssvid, sourceCode, dateFrom, dateTo }`), and `mapUrl`.
 
 **When to use:** When you have partial vessel information (name, identifiers, flag state) and need to find a vessel or a list of vessels. Use `vessel-by-id` instead if you already have the GFW vessel ID.
 
@@ -107,7 +107,7 @@ Retrieve one or more vessels by their GFW vessel IDs. Returns the same metadata 
 npx @globalfishingwatch/gfw-cli vessel-by-id --ids <id> [<id2> ...]
 ```
 
-**Returns:** `{ total, results[] }` — same fields as `vessel-search` results: `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `mapUrl`.
+**Returns:** `{ total, results[] }` — same fields as `vessel-search` results: `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `registryOwners`, `mapUrl`.
 
 **When to use:** When you already know the GFW vessel ID(s) and want to fetch their full profiles directly, without a search query.
 
@@ -328,7 +328,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Search vessels by name, MMSI, IMO, callsign, flag state, owner, or activity date range. At least one filter must be provided.
 
-**Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, and `mapUrl` (link to the vessel's profile on the GFW map — always show it to the user).
+**Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `registryOwners` (array of `{ name, flag, ssvid, sourceCode, dateFrom, dateTo }`), and `mapUrl` (link to the vessel's profile on the GFW map — always show it to the user).
 
 **When to use:** When you have partial vessel information and need to find a vessel or a list of vessels. Prefer `vessel-by-id` if you already have the GFW vessel ID.
 
@@ -338,7 +338,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Retrieve one or more full vessel profiles by their GFW vessel IDs.
 
-**Returns:** `{ total, results[] }` — same fields as `vessel-search` results, including `mapUrl`.
+**Returns:** `{ total, results[] }` — same fields as `vessel-search` results, including `registryOwners` and `mapUrl`.
 
 **When to use:** When you already know the GFW vessel ID(s) and want to skip a search query.
 
