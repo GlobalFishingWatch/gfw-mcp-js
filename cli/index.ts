@@ -86,13 +86,14 @@ auth
 program
   .command('vessel-search')
   .description(
-    'Search vessels by name, MMSI, IMO, callsign, flag, or date range',
+    'Search vessels by name, MMSI, IMO, callsign, flag, owner, or date range',
   )
   .option('--name <name>', 'Vessel name or partial name')
   .option('--mmsi <mmsi>', '9-digit MMSI')
   .option('--imo <imo>', '7-digit IMO number')
   .option('--callsign <callsign>', 'Radio callsign')
   .option('--flag <flag>', 'Flag state ISO 3166-1 alpha-3 (e.g. ESP)')
+  .option('--owner <owner>', 'Vessel owner name or partial name')
   .option('--active-from <date>', 'Active on or after this date (YYYY-MM-DD)')
   .option('--active-to <date>', 'Active on or before this date (YYYY-MM-DD)')
   .option('--limit <n>', 'Max results (default 10, max 50)', parseInt)
@@ -104,6 +105,7 @@ program
         imo: opts.imo,
         callsign: opts.callsign,
         flag: opts.flag,
+        owner: opts.owner,
         activeFrom: opts.activeFrom,
         activeTo: opts.activeTo,
         limit: opts.limit,
@@ -224,9 +226,10 @@ program
 // ── area-report ───────────────────────────────────────────────────────────────
 program
   .command('area-report')
-  .description('Calculate fishing or presence hours in a region')
-  .requiredOption('--region-type <type>', 'Region type: MPA | EEZ | RFMO')
-  .requiredOption('--region-id <id>', 'Canonical region ID')
+  .description('Calculate fishing or presence hours in a region or worldwide')
+  .option('--region-world', 'Run report for the entire world (mutually exclusive with --region-type and --region-id)')
+  .option('--region-type <type>', 'Region type: MPA | EEZ | RFMO')
+  .option('--region-id <id>', 'Canonical region ID')
   .requiredOption('--start-date <date>', 'Start date YYYY-MM-DD')
   .requiredOption(
     '--end-date <date>',
@@ -248,6 +251,7 @@ program
   .action((opts) =>
     run(() =>
       areaReport({
+        regionWorld: opts.regionWorld,
         regionType: opts.regionType as any,
         regionId: opts.regionId,
         startDate: opts.startDate,
