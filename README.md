@@ -446,6 +446,7 @@ And optionally:
 
 - `topVessels` — top N vessels sorted descending by activity (N = `--top-vessels-limit`, default 10), each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, and `value` (hours for FISHING/PRESENCE; detections for SAR/SENTINEL2). Only present when `--group-by VESSEL_ID`.
 - `rows` — aggregated entries sorted descending by activity value, each containing the grouping fields plus `hours`. Only present when `--group-by FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
+- `dataCaveats` — array of data documentation URLs (present when caveats exist for the requested type). Always display every URL in this array to the user.
 - Applied filters (`flags`, `vesselTypes`, `speeds`, `geartypes`) echoed back when provided.
 
 #### `vessel-insights`

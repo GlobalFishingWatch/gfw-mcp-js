@@ -11,6 +11,13 @@ import {
   ReportResponse,
 } from '../lib/types.js';
 
+const ACTIVITY_CAVEATS: Partial<Record<ActivityType, string[]>> = {
+  FISHING: [
+    'https://globalfishingwatch.org/data-documentation/apparent-fishing-effort-ais/',
+    'https://globalfishingwatch.org/data-documentation/considerations-when-using-automatic-identification-system-ais-data/',
+  ],
+};
+
 export async function areaReport({
   regionType,
   regionId,
@@ -210,6 +217,8 @@ export async function areaReport({
         ? { presenceHours: fishingHours }
         : { detections: fishingHours };
 
+  const dataCaveats = ACTIVITY_CAVEATS[activityType];
+
   return {
     ...(regionWorld ? { regionWorld: true } : { regionType, regionId }),
     dateRange: { start: startDate, end: endDate },
@@ -221,6 +230,7 @@ export async function areaReport({
     ...(speedList.length > 0 && { speeds: speedList }),
     ...(geartypeList.length > 0 && { geartypes: geartypeList }),
     gfwMapUrl,
+    ...(dataCaveats && { dataCaveats }),
   };
 }
 
@@ -434,6 +444,12 @@ export function register(server: McpServer) {
           .describe(
             'Aggregated rows sorted by hours descending. Present when groupBy is "FLAG", "GEARTYPE", or "FLAGANDGEARTYPE". Each row contains the grouping fields plus "hours".',
           ),
+        dataCaveats: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Links to GFW data documentation caveats for the requested activity type. Present when caveats exist for the type (e.g. "FISHING"). IMPORTANT: Always display all these URLs to the user when present.',
+          ),
       },
     },
     async (params) => {
@@ -463,6 +479,10 @@ export function register(server: McpServer) {
           'regionWorld' in output
             ? 'World'
             : `${'regionType' in output ? output.regionType : ''} ID: ${'regionId' in output ? output.regionId : ''}`;
+        const caveatsText =
+          output.dataCaveats && output.dataCaveats.length > 0
+            ? `\nData caveats:\n${output.dataCaveats.map((url: string) => `- ${url}`).join('\n')}`
+            : '';
         const responseText = `${reportTitle} for ${regionLabel}${flagText}
 Date Range: ${output.dateRange.start} to ${output.dateRange.end}
 
@@ -470,6 +490,7 @@ ${activitySummary}
 
 View detailed data on the Global Fishing Watch map:
 ${output.gfwMapUrl}
+${caveatsText}
 Full data: ${JSON.stringify(output, null, 2)}`;
         return createToolResponse(
           responseText,
