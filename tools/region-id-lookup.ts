@@ -2,6 +2,7 @@ import Fuse from 'fuse.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
+import { REGION_CAVEATS } from '../lib/caveats.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
 import { stemmed } from '../lib/search.js';
 import { ContextLayer, REGION_DATASETS } from '../lib/types.js';
@@ -43,7 +44,13 @@ export async function regionIdLookup({
       source: dataset,
     }));
 
-  return { regionType, query, limit: maxResults, matches };
+  return {
+    regionType,
+    query,
+    limit: maxResults,
+    matches,
+    ...(REGION_CAVEATS.length > 0 && { dataCaveats: REGION_CAVEATS }),
+  };
 }
 
 export function register(server: McpServer) {
@@ -78,6 +85,12 @@ export function register(server: McpServer) {
         regionType: z.enum(['MPA', 'EEZ', 'RFMO']),
         query: z.string(),
         limit: z.number(),
+        dataCaveats: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Array of markdown strings with data caveats. IMPORTANT: Always display every item to the user when present.',
+          ),
         matches: z.array(
           z.object({
             id: z.string(),

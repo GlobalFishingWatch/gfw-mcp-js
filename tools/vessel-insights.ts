@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
 import { generateVesselProfileUrl } from '../lib/map-url-generator.js';
+import { FISHING_CAVEATS } from '../lib/caveats.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
 import { VesselInsightsResponse } from '../lib/types.js';
 
@@ -46,7 +47,12 @@ export async function vesselInsights({
     mapUrls[id] = generateVesselProfileUrl(id, startDate, endDate);
   });
 
-  return { ...data, mapUrls };
+  const dataCaveats = includes.includes('FISHING') ? FISHING_CAVEATS : [];
+  return {
+    ...data,
+    mapUrls,
+    ...(dataCaveats.length > 0 && { dataCaveats }),
+  };
 }
 
 export function register(server: McpServer) {
@@ -156,6 +162,12 @@ export function register(server: McpServer) {
           .record(z.string())
           .describe(
             "Map URLs keyed by vessel ID. Each URL links to the vessel's profile on the Global Fishing Watch map for the queried period. IMPORTANT!! Always share these full links with the user when presenting results. NEVER truncate, shorten, or summarize them.",
+          ),
+        dataCaveats: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Array of markdown strings with data caveats. Present when "FISHING" is included. IMPORTANT: Always display every item to the user when present.',
           ),
       },
     },

@@ -6,6 +6,7 @@ import {
   generateVesselProfileUrl,
 } from '../lib/map-url-generator.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
+import { EVENT_TYPE_CAVEATS } from '../lib/caveats.js';
 import { EventsResponse, REGION_DATASETS } from '../lib/types.js';
 
 const datasetsByType = {
@@ -155,6 +156,8 @@ export async function vesselEvents({
       ? generateVesselProfileUrl(vesselId, startDate, endDate, [eventType])
       : null;
 
+  const dataCaveats = EVENT_TYPE_CAVEATS[eventType] ?? [];
+
   return {
     total: data.total,
     limit: data.limit,
@@ -162,6 +165,7 @@ export async function vesselEvents({
     nextOffset: data.nextOffset || 0,
     entries,
     mapUrl,
+    ...(dataCaveats.length > 0 && { dataCaveats }),
   };
 }
 
@@ -302,6 +306,12 @@ export function register(server: McpServer) {
           .nullish()
           .describe(
             "Global Fishing Watch map URL to view the vessel's profile for the queried period. IMPORTANT!! Always share this full link with the user when presenting results.",
+          ),
+        dataCaveats: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Array of markdown strings with data caveats for the requested event type. Present when caveats exist. IMPORTANT: Always display every item to the user when present.',
           ),
       },
     },

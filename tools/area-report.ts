@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
 import { generateReportUrl } from '../lib/map-url-generator.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
+import { ACTIVITY_CAVEATS } from '../lib/caveats.js';
 import {
   ACTIVITY_DATASETS,
   ActivityType,
@@ -10,15 +11,6 @@ import {
   REGION_DATASETS,
   ReportResponse,
 } from '../lib/types.js';
-
-const ACTIVITY_CAVEATS: Partial<Record<ActivityType, string[]>> = {
-  FISHING: [
-    'To avoid any misinterpretation of the data, please review this [data caveats about apparent fishing effort](https://globalfishingwatch.org/data-documentation/apparent-fishing-effort-ais/) and this about [AIS](https://globalfishingwatch.org/data-documentation/considerations-when-using-automatic-identification-system-ais-data/)',
-  ],
-  PRESENCE: ['To avoid any misinterpretation of AIS Presence, please review the [data caveats](https://globalfishingwatch.org/our-apis/documentation#ais-vessel-presence-caveats) and this about [AIS](https://globalfishingwatch.org/data-documentation/considerations-when-using-automatic-identification-system-ais-data/)'],
-  SAR: ['To avoid any misinterpretation of SAR Vessel Detections, please review the [data caveats](https://globalfishingwatch.org/our-apis/documentation#sar-vessel-detections-data-caveats)'],
-  SENTINEL2: ['To avoid any misinterpretation of Sentinel-2 Vessel Detections, please review the [data caveats](https://globalfishingwatch.org/data-download/datasets/public-sentinel2-vessel-detections%3Av1.0#caveats)'],
-};
 
 export async function areaReport({
   regionType,
