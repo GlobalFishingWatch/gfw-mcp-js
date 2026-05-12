@@ -15,9 +15,9 @@ const ACTIVITY_CAVEATS: Partial<Record<ActivityType, string[]>> = {
   FISHING: [
     'To avoid any misinterpretation of the data, please review this [data caveats about apparent fishing effort](https://globalfishingwatch.org/data-documentation/apparent-fishing-effort-ais/) and this about [AIS](https://globalfishingwatch.org/data-documentation/considerations-when-using-automatic-identification-system-ais-data/)',
   ],
-  PRESENCE: [],
-  SAR: [],
-  SENTINEL2: [],
+  PRESENCE: ['To avoid any misinterpretation of AIS Presence, please review the [data caveats](https://globalfishingwatch.org/our-apis/documentation#ais-vessel-presence-caveats) and this about [AIS](https://globalfishingwatch.org/data-documentation/considerations-when-using-automatic-identification-system-ais-data/)'],
+  SAR: ['To avoid any misinterpretation of SAR Vessel Detections, please review the [data caveats](https://globalfishingwatch.org/our-apis/documentation#sar-vessel-detections-data-caveats)'],
+  SENTINEL2: ['To avoid any misinterpretation of Sentinel-2 Vessel Detections, please review the [data caveats](https://globalfishingwatch.org/data-download/datasets/public-sentinel2-vessel-detections%3Av1.0#caveats)'],
 };
 
 export async function areaReport({
