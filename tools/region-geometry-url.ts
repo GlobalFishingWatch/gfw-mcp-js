@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { REGION_CAVEATS } from '../lib/caveats.js';
 import { createToolResponse } from '../lib/response.js';
 import { REGION_DATASETS } from '../lib/types.js';
 
@@ -14,7 +15,12 @@ export function regionGeometry({
 }) {
   const dataset = REGION_DATASETS[regionType];
   const url = `${GFW_BASE}/v3/datasets/${dataset}/context-layers/${id}`;
-  return { regionType, id, url };
+  return {
+    regionType,
+    id,
+    url,
+    ...(REGION_CAVEATS.length > 0 && { dataCaveats: REGION_CAVEATS }),
+  };
 }
 
 export function register(server: McpServer) {
@@ -36,6 +42,12 @@ export function register(server: McpServer) {
         regionType: z.enum(['MPA', 'EEZ', 'RFMO']),
         id: z.string(),
         url: z.string().describe('URL to fetch the GeoJSON geometry of the region'),
+        dataCaveats: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Array of markdown strings with data caveats. IMPORTANT: Always display every item to the user when present.',
+          ),
       },
     },
     async (params) => {

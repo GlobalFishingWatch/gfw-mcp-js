@@ -347,7 +347,7 @@ npx @globalfishingwatch/gfw-cli events-stats --event-type fishing --start-date 2
 npx @globalfishingwatch/gfw-cli events-stats --event-type encounter --start-date 2024-01-01 --end-date 2024-12-31 --region-type RFMO --region-id WCPFC
 ```
 
-**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[], mapUrl }` — `groups` contains `{ name, value }` pairs sorted descending by count. `mapUrl` links to the GFW map to visualise the queried events; it is **not present** when `--event-type` is `fishing`.
+**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[], mapUrl, dataCaveats? }` — `groups` contains `{ name, value }` pairs sorted descending by count. `mapUrl` links to the GFW map to visualise the queried events; it is **not present** when `--event-type` is `fishing`. `dataCaveats` is an array of markdown strings present when `--event-type` is `fishing` — always display every item.
 
 #### `region-id-lookup`
 
@@ -466,7 +466,7 @@ npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids <id> [<id2> ...]
 | `--end-date`   | `YYYY-MM-DD`                                                                                                                                                                                                                                                        |
 | `--includes`   | `FISHING` \| `GAP` \| `COVERAGE` \| `VESSEL-IDENTITY-IUU-VESSEL-LIST` — one or more; `FISHING`: apparent fishing events and RFMO/MPA violations; `GAP`: AIS-off dark activity; `COVERAGE`: AIS reception %; `VESSEL-IDENTITY-IUU-VESSEL-LIST`: IUU list appearances |
 
-**Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity? }` — only insight fields for requested types are present. `mapUrls` is an object keyed by vessel ID linking each vessel to its GFW map profile for the queried period — always show these URLs to the user in full.
+**Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity?, dataCaveats? }` — only insight fields for requested types are present. `mapUrls` is an object keyed by vessel ID linking each vessel to its GFW map profile for the queried period — always show these URLs to the user in full. `dataCaveats` is an array of markdown strings present when `--includes FISHING` — always display every item.
 
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids abc123 --start-date 2024-01-01 --end-date 2024-12-31 --includes FISHING GAP

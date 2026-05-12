@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
 import { generateReportUrl } from '../lib/map-url-generator.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
+import { ACTIVITY_CAVEATS } from '../lib/caveats.js';
 import {
   ACTIVITY_DATASETS,
   ActivityType,
@@ -10,15 +11,6 @@ import {
   REGION_DATASETS,
   ReportResponse,
 } from '../lib/types.js';
-
-const ACTIVITY_CAVEATS: Partial<Record<ActivityType, string[]>> = {
-  FISHING: [
-    'To avoid any misinterpretation of the data, please review this [data caveats about apparent fishing effort](https://globalfishingwatch.org/data-documentation/apparent-fishing-effort-ais/) and this about [AIS](https://globalfishingwatch.org/data-documentation/considerations-when-using-automatic-identification-system-ais-data/)',
-  ],
-  PRESENCE: [],
-  SAR: [],
-  SENTINEL2: [],
-};
 
 export async function areaReport({
   regionType,

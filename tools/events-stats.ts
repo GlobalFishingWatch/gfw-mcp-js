@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
+import { EVENT_TYPE_CAVEATS } from '../lib/caveats.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
 import {
   EventsResponse,
@@ -117,7 +118,11 @@ export async function eventsStats({
     regionType,
     regionId,
   );
-  return data;
+  const dataCaveats = EVENT_TYPE_CAVEATS[eventType] ?? [];
+  return {
+    ...data,
+    ...(dataCaveats.length > 0 && { dataCaveats }),
+  };
 }
 
 export function register(server: McpServer) {
@@ -212,6 +217,12 @@ export function register(server: McpServer) {
           .optional()
           .describe(
             'GFW map URL to visualise the queried events. Not present when eventType is "fishing".',
+          ),
+        dataCaveats: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Array of markdown strings with data caveats for the requested event type. Present when caveats exist. IMPORTANT: Always display every item to the user when present.',
           ),
       },
     },

@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { gfwFetch } from '../lib/api.js';
 import { generateVesselProfileUrl } from '../lib/map-url-generator.js';
+import { VESSEL_IDENTITY_CAVEATS } from '../lib/caveats.js';
 import { createErrorResponse, createToolResponse } from '../lib/response.js';
 import { VesselSearchResponse } from '../lib/types.js';
 
@@ -37,7 +38,11 @@ export async function vesselById({ ids }: { ids: string[] }) {
     };
   });
 
-  return { total: data.total, results };
+  return {
+    total: data.total,
+    results,
+    ...(VESSEL_IDENTITY_CAVEATS.length > 0 && { dataCaveats: VESSEL_IDENTITY_CAVEATS }),
+  };
 }
 
 export function register(server: McpServer) {
@@ -55,6 +60,12 @@ export function register(server: McpServer) {
       },
       outputSchema: {
         total: z.number(),
+        dataCaveats: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Array of markdown strings with data caveats. IMPORTANT: Always display every item to the user when present.',
+          ),
         results: z.array(
           z.object({
             vesselId: z.string(),

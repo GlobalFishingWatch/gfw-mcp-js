@@ -28,7 +28,7 @@ When using this skill, the agent must follow these rules:
 - **Always show URLs:** Every URL present in any tool response must be shown to the user, without exception. Never omit, hide, or summarize a URL. Display each one as a clickable link on its own line.
 
 - **Never run multiple reports in parallel:** If you need to calculate multiple `area-report`s, run them sequentially — one at a time, waiting for each to complete before starting the next.
-- **Always show data caveats:** When an `area-report` returns a `dataCaveats` array, you MUST display every item in that array to the user as part of your response. Each item is a markdown string — render it as markdown. Never omit or hide these.
+- **Always show data caveats:** When any tool returns a `dataCaveats` array, you MUST display every item in that array to the user as part of your response. Each item is a markdown string — render it as markdown. Never omit or hide these.
 - **When in doubt, ask the user:** If you are unsure about any parameter value, filter, or option to use, ask the user for clarification before proceeding. Do not make assumptions without confirming them with the user first.
 - **Use `vessel-by-id` when you have a GFW vessel ID:** If you already have the GFW vessel ID, use the `vessel-by-id` tool to fetch the full vessel profile directly, instead of using `vessel-search`.
 
@@ -328,7 +328,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Search vessels by name, MMSI, IMO, callsign, flag state, owner, or activity date range. At least one filter must be provided.
 
-**Returns:** `{ total, limit, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `registryOwners` (array of `{ name, flag, ssvid, sourceCode, dateFrom, dateTo }`), and `mapUrl` (link to the vessel's profile on the GFW map — always show it to the user).
+**Returns:** `{ total, limit, results[], dataCaveats? }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `registryOwners` (array of `{ name, flag, ssvid, sourceCode, dateFrom, dateTo }`), and `mapUrl` (link to the vessel's profile on the GFW map — always show it to the user). `dataCaveats` is an array of markdown strings — display every item when present.
 
 **When to use:** When you have partial vessel information and need to find a vessel or a list of vessels. Prefer `vessel-by-id` if you already have the GFW vessel ID.
 
@@ -338,7 +338,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Retrieve one or more full vessel profiles by their GFW vessel IDs.
 
-**Returns:** `{ total, results[] }` — same fields as `vessel-search` results, including `registryOwners` and `mapUrl`.
+**Returns:** `{ total, results[], dataCaveats? }` — same fields as `vessel-search` results, including `registryOwners` and `mapUrl`. `dataCaveats` is an array of markdown strings — display every item when present.
 
 **When to use:** When you already know the GFW vessel ID(s) and want to skip a search query.
 
@@ -348,7 +348,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Retrieve fishing activity, AIS gap (dark activity), coverage, and IUU vessel list insights for one or more vessels over a date range. All four parameters are required. Multiple insight types can be requested in a single call.
 
-**Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity? }` — only fields corresponding to the requested `includes` types are present. `mapUrls` is an object keyed by vessel ID linking each vessel to its GFW map profile for the queried period — always show these URLs to the user in full, never truncate or shorten them.
+**Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity?, dataCaveats? }` — only fields corresponding to the requested `includes` types are present. `mapUrls` is an object keyed by vessel ID linking each vessel to its GFW map profile for the queried period — always show these URLs to the user in full, never truncate or shorten them. `dataCaveats` is an array of markdown strings present when `FISHING` is included — display every item.
 
 - `apparentFishing` (FISHING): `{ datasets, periodSelectedCounters: { events, eventsInRFMOWithoutKnownAuthorization, eventsInNoTakeMPAs }, eventsInRfmoWithoutKnownAuthorization[], eventsInNoTakeMpas[] }`
 - `gap` (GAP): `{ datasets, periodSelectedCounters: { events, eventsGapOff }, aisOff[] }`
@@ -373,7 +373,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Retrieve individual fishing, encounter, port visit, or loitering events. Filter by event type, date range, vessel ID, region, confidence (port visits), and encounter type.
 
-**Returns:** `{ total, limit, offset, nextOffset, entries[], mapUrl }` — each entry includes `id`, `type`, `start`, `end`, `lat`, `lon`, `vesselId`, and `regions` (arrays of intersecting MPA, EEZ, RFMO, and FAO IDs). Port visit events additionally include a `port` object; encounter events additionally include an `encounteredVessel` object. `mapUrl` links to the vessel's GFW profile for the queried period.
+**Returns:** `{ total, limit, offset, nextOffset, entries[], mapUrl, dataCaveats? }` — each entry includes `id`, `type`, `start`, `end`, `lat`, `lon`, `vesselId`, and `regions` (arrays of intersecting MPA, EEZ, RFMO, and FAO IDs). Port visit events additionally include a `port` object; encounter events additionally include an `encounteredVessel` object. `mapUrl` links to the vessel's GFW profile for the queried period. `dataCaveats` is an array of markdown strings present when `eventType` is `fishing` — display every item.
 
 **When to use:** When you need individual event details (exact time, position, involved vessels, ports). For aggregate counts use `events-stats`. Results are sorted by start date descending.
 
@@ -389,7 +389,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Compute aggregate statistics for events (fishing, encounters, port visits, loitering) over a date range. Optionally filter by region and group by flag state or gear type.
 
-**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[], mapUrl }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag or gear type and `value` is the event count. `mapUrl` links to the GFW map to visualise the queried events; it is **not present** when `eventType` is `fishing`.
+**Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[], mapUrl, dataCaveats? }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag or gear type and `value` is the event count. `mapUrl` links to the GFW map to visualise the queried events; it is **not present** when `eventType` is `fishing`. `dataCaveats` is an array of markdown strings present when `eventType` is `fishing` — display every item.
 
 **When to use:** When you need aggregate numbers, rankings by flag or gear type, or a summary of how many events/vessels are involved — without needing individual event records.
 
@@ -401,7 +401,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Resolve a human-readable MPA, EEZ, or RFMO name to its canonical region ID using word-overlap matching.
 
-**Returns:** `{ regionType, query, limit, matches[] }` — each match includes `id`, `name`, `country` (ISO 3166-1 alpha-3 if available), and `source`.
+**Returns:** `{ regionType, query, limit, matches[], dataCaveats? }` — each match includes `id`, `name`, `country` (ISO 3166-1 alpha-3 if available), and `source`. `dataCaveats` is an array of markdown strings — display every item when present.
 
 **When to use:** Always run this first when you only have the region name and need to call `area-report`, `vessel-events`, or `events-stats` with a `regionId`. If multiple matches are returned, ask the user which one they meant before proceeding.
 
@@ -411,7 +411,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Returns the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO. No API token is required to call that URL.
 
-**Returns:** `{ regionType, id, url }` — `url` is the endpoint from which the GeoJSON can be fetched directly.
+**Returns:** `{ regionType, id, url, dataCaveats? }` — `url` is the endpoint from which the GeoJSON can be fetched directly. `dataCaveats` is an array of markdown strings — display every item when present.
 
 **When to use:** When the user wants to visualize or programmatically use the geographic boundary of a region. Run `region-id-lookup` first to obtain the region ID.
 
