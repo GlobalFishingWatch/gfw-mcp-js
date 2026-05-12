@@ -28,7 +28,7 @@ When using this skill, the agent must follow these rules:
 - **Always show URLs:** Every URL present in any tool response must be shown to the user, without exception. Never omit, hide, or summarize a URL. Display each one as a clickable link on its own line.
 
 - **Never run multiple reports in parallel:** If you need to calculate multiple `area-report`s, run them sequentially — one at a time, waiting for each to complete before starting the next.
-- **Always show data caveats:** When an `area-report` returns a `dataCaveats` array, you MUST display every URL in that array to the user as part of your response. Never omit or hide these links.
+- **Always show data caveats:** When an `area-report` returns a `dataCaveats` array, you MUST display every item in that array to the user as part of your response. Each item is a markdown string — render it as markdown. Never omit or hide these.
 - **When in doubt, ask the user:** If you are unsure about any parameter value, filter, or option to use, ask the user for clarification before proceeding. Do not make assumptions without confirming them with the user first.
 - **Use `vessel-by-id` when you have a GFW vessel ID:** If you already have the GFW vessel ID, use the `vessel-by-id` tool to fetch the full vessel profile directly, instead of using `vessel-search`.
 
@@ -287,7 +287,7 @@ And optionally:
 
 - `topVessels` (top N sorted descending, where N = `--top-vessels-limit`, default 10; each with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `value`) — only when `--group-by VESSEL_ID`. `value` is hours for FISHING/PRESENCE, detections for SAR/SENTINEL2.
 - `rows` (aggregated and sorted descending by hours) — only when `--group-by FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
-- `fishingCaveats` — array of data documentation URLs (present only when `--type FISHING`). **Always display every URL in this array to the user.**
+- `dataCaveats` — array of markdown strings with data caveats (present when caveats exist for the requested type). **Always display every item in this array to the user.**
 - Applied filters (`flags`, `vesselTypes`, `speeds`, `geartypes`) echoed back when provided.
 
 **When to use:**
@@ -431,7 +431,7 @@ And optionally:
 
 - `topVessels` (top N sorted descending, where N = `topVesselsLimit`, default 10; with `vesselId`, `shipName`, `mmsi`, `flag`, `geartype`, `value`) — only when `groupBy` is `VESSEL_ID`. `value` is hours for FISHING/PRESENCE, detections for SAR/SENTINEL2.
 - `rows` (aggregated entries sorted descending by hours, with grouping fields + `hours`) — only when `groupBy` is `FLAG`, `GEARTYPE`, or `FLAGANDGEARTYPE`.
-- `dataCaveats` — array of data documentation URLs (present when caveats exist for the requested type). **Always display every URL in this array to the user.**
+- `dataCaveats` — array of markdown strings with data caveats (present when caveats exist for the requested type). **Always display every item in this array to the user.**
 - Applied filters echoed back when provided.
 
 **When to use:**

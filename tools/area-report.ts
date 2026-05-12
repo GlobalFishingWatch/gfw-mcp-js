@@ -13,8 +13,7 @@ import {
 
 const ACTIVITY_CAVEATS: Partial<Record<ActivityType, string[]>> = {
   FISHING: [
-    'https://globalfishingwatch.org/data-documentation/apparent-fishing-effort-ais/',
-    'https://globalfishingwatch.org/data-documentation/considerations-when-using-automatic-identification-system-ais-data/',
+    'To avoid any misinterpretation of the data, please review this [data caveats about apparent fishing effort](https://globalfishingwatch.org/data-documentation/apparent-fishing-effort-ais/) and this about [AIS](https://globalfishingwatch.org/data-documentation/considerations-when-using-automatic-identification-system-ais-data/)',
   ],
 };
 
@@ -448,7 +447,7 @@ export function register(server: McpServer) {
           .array(z.string())
           .optional()
           .describe(
-            'Links to GFW data documentation caveats for the requested activity type. Present when caveats exist for the type (e.g. "FISHING"). IMPORTANT: Always display all these URLs to the user when present.',
+            'Array of markdown strings with data caveats for the requested activity type. Present when caveats exist for the type (e.g. "FISHING"). IMPORTANT: Always display all these to the user when present.',
           ),
       },
     },
@@ -481,7 +480,7 @@ export function register(server: McpServer) {
             : `${'regionType' in output ? output.regionType : ''} ID: ${'regionId' in output ? output.regionId : ''}`;
         const caveatsText =
           output.dataCaveats && output.dataCaveats.length > 0
-            ? `\nData caveats:\n${output.dataCaveats.map((url: string) => `- ${url}`).join('\n')}`
+            ? `\n${output.dataCaveats.join('\n')}`
             : '';
         const responseText = `${reportTitle} for ${regionLabel}${flagText}
 Date Range: ${output.dateRange.start} to ${output.dateRange.end}
