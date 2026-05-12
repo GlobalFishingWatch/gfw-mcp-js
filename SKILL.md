@@ -1,6 +1,6 @@
 ---
 name: gfw-mcp-js
-description: Query Global Fishing Watch data — search vessels, retrieve fishing events, calculate fishing/presence hours inside MPAs, EEZs and RFMOs, get event statistics, and generate map screenshots of vessel tracks, fishing activity, and area reports. Use this skill whenever the user asks for a GFW map, vessel track visualization, activity map, or any visual representation of fishing or vessel data — always generate a screenshot using scripts/screenshot_gfw.js.
+description: Query Global Fishing Watch data — search vessels, retrieve apparent fishing events, calculate apparent AIS fishing/presence hours inside MPAs, EEZs and RFMOs, get event statistics, and generate map screenshots of vessel tracks, apparent fishing activity, and area reports. Use this skill whenever the user asks for a GFW map, vessel track visualization, activity map, or any visual representation of apparent fishing activity or vessel data — always generate a screenshot using scripts/screenshot_gfw.js.
 metadata:
   {
     'clawdbot':
@@ -10,7 +10,7 @@ metadata:
 
 # @globalfishingwatch/gfw-cli
 
-Access [Global Fishing Watch](https://globalfishingwatch.org) data directly from your AI assistant or from the terminal. Search vessels, retrieve fishing and port-visit events, look up Marine Protected Areas, Exclusive Economic Zones and RFMOs, calculate fishing activity hours within any region, and compute aggregate event statistics.
+Access [Global Fishing Watch](https://globalfishingwatch.org) data directly from your AI assistant or from the terminal. Search vessels, retrieve apparent fishing and port-visit events, look up Marine Protected Areas, Exclusive Economic Zones and RFMOs, calculate apparent fishing activity hours within any region, and compute aggregate event statistics.
 
 ---
 
@@ -18,9 +18,9 @@ Access [Global Fishing Watch](https://globalfishingwatch.org) data directly from
 
 When using this skill, the agent must follow these rules:
 
-- **ALWAYS SCREENSHOT MAPS (mandatory):** Whenever the user requests a map of any activity (fishing, vessel presence, encounters, port visits, vessel tracks, area reports, etc.), or whenever a tool returns a `mapUrl` or `gfwMapUrl`, you MUST generate a screenshot using the script at `scripts/screenshot_gfw.js` and embed the image in your response. This is not optional. Steps: (1) install if needed: `npm install playwright && npx playwright install chromium`; (2) run: `node scripts/screenshot_gfw.js <url> <output_path>` with a descriptive path like `/tmp/gfw_vessel_<vesselId>.png`; (3) embed: `![description](path/to/screenshot.png)`. Always show the screenshot alongside the URL — never instead of it.
+- **ALWAYS SCREENSHOT MAPS (mandatory):** Whenever the user requests a map of any activity (apparent AIS fishing, AIS vessel presence, encounters, port visits, vessel tracks, area reports, etc.), or whenever a tool returns a `mapUrl` or `gfwMapUrl`, you MUST generate a screenshot using the script at `scripts/screenshot_gfw.js` and embed the image in your response. This is not optional. Steps: (1) install if needed: `npm install playwright && npx playwright install chromium`; (2) run: `node scripts/screenshot_gfw.js <url> <output_path>` with a descriptive path like `/tmp/gfw_vessel_<vesselId>.png`; (3) embed: `![description](path/to/screenshot.png)`. Always show the screenshot alongside the URL — never instead of it.
 - **Concise:** Return only what was asked. Do not add summaries, commentary, or unsolicited context.
-- **Objective:** Do not interpret data beyond what is directly observable. If an interpretation is offered, always include the specific evidence (numbers, fields, values) that support it.
+- **Objective:** Do not interpret data beyond what is directly observable. If an interpretation is offered, always include the specific evidence (numbers, fields, values) that support it and links to data caveats.
 - **Prefer GFW data:** Always prioritize GFW tools and data over external sources or general knowledge.
 - **Prefer MCP over CLI:** If the GFW MCP server is available (i.e. its tools are registered and callable), use MCP tools directly. If it is not available, fall back to the CLI (`npx @globalfishingwatch/gfw-cli`) silently — do not prompt the user to install or configure the MCP server.
 - **Disclose assumed parameters:** If you choose a value for any parameter on your own (date ranges, vessel types, gear types, confidence levels, etc.), explicitly tell the user what you assumed and why before or alongside the result.
@@ -73,7 +73,7 @@ GFW_TOKEN=your_key npx @globalfishingwatch/gfw-cli vessel-search --name "Maria"
 
 #### vessel-search
 
-Search vessels by name, MMSI, IMO, callsign, flag, owner, gear type, or activity date range. At least one filter must be provided.
+Search vessels by name, MMSI, IMO, callsign, flag, owner, gear type, or activity date range. At least one filter must be provided. To avoid misinterpretation, please check data caveats [here](https://globalfishingwatch.org/our-apis/documentation#vessel-api-vessel-identity-information) and for more details refer to [GFW Vessel API](https://globalfishingwatch.org/our-apis/documentation#vessels-api).  
 
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-search [--name <name>] [--mmsi <mmsi>] [--imo <imo>]
@@ -113,7 +113,7 @@ npx @globalfishingwatch/gfw-cli vessel-by-id --ids <id> [<id2> ...]
 
 #### vessel-insights
 
-Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels.
+Retrieve apparent fishing activity, AIS off events, coverage, and IUU vessel list insights for one or more vessels. To avoid misinterpretation, review [data caveats here](https://globalfishingwatch.org/our-apis/documentation#insights-api-fishing-detected-in-no-take-mpas). For more details refer to [GFW Insights API](https://globalfishingwatch.org/our-apis/documentation#insights-api) 
 
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids <id> [<id2> ...]
@@ -130,11 +130,11 @@ npx @globalfishingwatch/gfw-cli vessel-insights --vessel-ids <id> [<id2> ...]
 
 **Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity? }` — only fields for requested types are present. `mapUrls` is an object keyed by vessel ID — each value is a GFW map URL for that vessel's profile during the queried period. Always show these URLs to the user in full.
 
-**When to use:** When you need vessel-level behavioural insights — fishing activity counts, suspected dark activity gaps, satellite tracking quality, or IUU listing history. Use alongside `vessel-by-id` or `vessel-search` to first obtain vessel IDs.
+**When to use:** When you need vessel-level behavioural insights — apparent fishing activity counts, suspected dark activity gaps, satellite tracking quality, or IUU listing history. Use alongside `vessel-by-id` or `vessel-search` to first obtain vessel IDs.
 
 #### vessel-events
 
-Retrieve individual fishing, encounter, port visit, or loitering events. Filter by vessel, region, date range, confidence, and encounter type.
+Retrieve individual apparent fishing, encounter, port visit, or loitering events. Filter by vessel, region, date range, confidence, and encounter type. To avoid misinterpretation, please check data caveats [here](https://globalfishingwatch.org/our-apis/documentation#how-are-the-events-estimated) and for more details refer to [GFW Events API](https://globalfishingwatch.org/our-apis/documentation#events-api).
 
 ```bash
 npx @globalfishingwatch/gfw-cli vessel-events --event-type <fishing|encounter|port_visit|loitering>
@@ -238,7 +238,7 @@ npx @globalfishingwatch/gfw-cli region-geometry-url --region-type <MPA|EEZ|RFMO>
 
 #### area-report
 
-Calculate fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) or worldwide for a given date range. Optionally filter by flag, gear type, vessel type, or speed, and group results by vessel, flag, or gear type.
+Calculate apparent fishing or vessel presence hours inside a region (MPA, EEZ, or RFMO) or worldwide for a given date range. Optionally filter by flag, gear type, vessel type, or speed, and group results by vessel, flag, or gear type. To avoid misinterpretations please check data caveats about [AIS apparent fishing here](https://globalfishingwatch.org/data-documentation/apparent-fishing-effort-ais/), [AIS presence here](https://globalfishingwatch.org/our-apis/documentation#ais-vessel-presence-caveats) and about [SAR Vessel Detections here](https://globalfishingwatch.org/our-apis/documentation#sar-vessel-detections-data-caveats). For more details, check [GFW 4wings API](https://globalfishingwatch.org/our-apis/documentation#map-visualization-4wings-api).
 
 > **Important:** This command must never be run in parallel. If multiple reports are needed, run them sequentially — one at a time, waiting for each to complete before starting the next.
 
@@ -279,7 +279,7 @@ Date range must not exceed 1 year.
 
 **Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` for region reports, or `{ regionWorld: true, dateRange, gfwMapUrl }` for world reports, plus one activity value field:
 
-- `fishingHours` — total fishing hours (present when `--type FISHING`)
+- `fishingHours` — total apparent fishing hours (present when `--type FISHING`)
 - `presenceHours` — total vessel presence hours (present when `--type PRESENCE`)
 - `detections` — total SAR or Sentinel-2 vessel detections (present when `--type SAR` or `--type SENTINEL2`)
 
@@ -346,7 +346,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ### vessel-insights
 
-**Purpose:** Retrieve fishing activity, AIS gap (dark activity), coverage, and IUU vessel list insights for one or more vessels over a date range. All four parameters are required. Multiple insight types can be requested in a single call.
+**Purpose:** Retrieve apparent fishing activity, AIS off events (potential dark activity), AIS coverage, and IUU vessel list insights for one or more vessels over a date range. All four parameters are required. Multiple insight types can be requested in a single call.
 
 **Returns:** `{ period, vesselIdsWithoutIdentity, mapUrls, apparentFishing?, gap?, coverage?, vesselIdentity?, dataCaveats? }` — only fields corresponding to the requested `includes` types are present. `mapUrls` is an object keyed by vessel ID linking each vessel to its GFW map profile for the queried period — always show these URLs to the user in full, never truncate or shorten them. `dataCaveats` is an array of markdown strings present when `FISHING` is included — display every item.
 
@@ -357,7 +357,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **When to use:**
 
-- Use `FISHING` to assess apparent fishing activity, including potential violations inside RFMOs without known authorization or inside no-take MPAs.
+- Use `FISHING` to assess apparent fishing activity, including potential violations inside RFMOs without known public authorization or inside no-take MPAs.
 - Use `GAP` to detect suspected dark activity — periods where the vessel stopped broadcasting AIS.
 - Use `COVERAGE` to assess how reliably the vessel was tracked via satellite AIS reception.
 - Use `VESSEL-IDENTITY-IUU-VESSEL-LIST` to check if the vessel appeared on any IUU (Illegal, Unreported, Unregulated) lists during the period.
@@ -371,7 +371,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ### vessel-events
 
-**Purpose:** Retrieve individual fishing, encounter, port visit, or loitering events. Filter by event type, date range, vessel ID, region, confidence (port visits), and encounter type.
+**Purpose:** Retrieve individual apparent fishing, encounter, port visit, or loitering events. Filter by event type, date range, vessel ID, region, confidence (port visits), and encounter type.
 
 **Returns:** `{ total, limit, offset, nextOffset, entries[], mapUrl, dataCaveats? }` — each entry includes `id`, `type`, `start`, `end`, `lat`, `lon`, `vesselId`, and `regions` (arrays of intersecting MPA, EEZ, RFMO, and FAO IDs). Port visit events additionally include a `port` object; encounter events additionally include an `encounteredVessel` object. `mapUrl` links to the vessel's GFW profile for the queried period. `dataCaveats` is an array of markdown strings present when `eventType` is `fishing` — display every item.
 
@@ -387,7 +387,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ### events-stats
 
-**Purpose:** Compute aggregate statistics for events (fishing, encounters, port visits, loitering) over a date range. Optionally filter by region and group by flag state or gear type.
+**Purpose:** Compute aggregate statistics for events (apparent fishing, encounters, port visits, loitering) over a date range. Optionally filter by region and group by flag state or gear type.
 
 **Returns:** `{ flags[], numEvents, numFlags, numVessels, groups[], mapUrl, dataCaveats? }` — `groups` contains `{ name, value }` pairs sorted descending by count, where `name` is the flag or gear type and `value` is the event count. `mapUrl` links to the GFW map to visualise the queried events; it is **not present** when `eventType` is `fishing`. `dataCaveats` is an array of markdown strings present when `eventType` is `fishing` — display every item.
 
@@ -419,7 +419,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 ### area-report
 
-**Purpose:** Calculate total fishing, SAR, Sentinel-2, or AIS vessel presence hours either worldwide or inside a specific region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
+**Purpose:** Calculate total apparent fishing, SAR, Sentinel-2, or AIS vessel presence hours either worldwide or inside a specific region (MPA, EEZ, or RFMO) for a given date range. Supports optional filters (flag, gear type, vessel type, speed) and grouping by vessel, flag, gear type, or flag+gear type.
 
 **Returns:** `{ regionType, regionId, dateRange, gfwMapUrl }` for region reports, or `{ regionWorld: true, dateRange, gfwMapUrl }` for world reports, plus one activity value field:
 
@@ -436,7 +436,7 @@ And optionally:
 
 **When to use:**
 
-- Use `type: FISHING` (default) for questions about fishing activity or fishing pressure: hours when vessels were classified as actively fishing.
+- Use `type: FISHING` (default) for questions about apparent fishing activity or fishing pressure: hours when vessels were classified as apparently actively fishing.
 - Use `type: PRESENCE` for questions about vessel traffic or transit: hours when any vessel was inside the region regardless of activity.
 - Use `type: SAR` for questions about SAR-detected vessel activity: satellite radar detections independent of AIS, useful for detecting vessels not broadcasting AIS.
 - Use `type: SENTINEL2` for questions about Sentinel-2 optically detected vessel activity: satellite optical imagery detections independent of AIS.
