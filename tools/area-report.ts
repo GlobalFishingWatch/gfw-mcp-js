@@ -263,7 +263,7 @@ export function register(server: McpServer) {
         endDate: z
           .string()
           .describe(
-            'End date of the report period (ISO 8601 format: YYYY-MM-DD). IMPORTANT! this date is exclusive. The range between startDate and endDate must not exceed 1 year.',
+            'End date of the report period (ISO 8601 format: YYYY-MM-DD). IMPORTANT! this date is inclusive. The range between startDate and endDate must not exceed 1 year.',
           ),
         type: z
           .enum(['FISHING', 'PRESENCE', 'SAR', 'SENTINEL2'])
@@ -431,7 +431,7 @@ export function register(server: McpServer) {
           )
           .optional()
           .describe(
-            'Top 10 vessels sorted descending by activity value. Only present when groupBy is "VESSEL_ID".',
+            'Top N vessels sorted descending by activity value (N = topVesselsLimit, default 10, max 100). Only present when groupBy is "VESSEL_ID".',
           ),
         rows: z
           .array(z.record(z.string().or(z.number())))

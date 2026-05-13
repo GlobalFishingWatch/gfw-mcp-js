@@ -35,18 +35,19 @@ export async function vesselSearch({
     return createErrorResponse('Limit cannot exceed 50 results.');
   }
 
+  const esc = (s: string) => s.replace(/'/g, "''");
   const conditions: string[] = [];
-  if (callsign) conditions.push(`callsign = '${callsign.toUpperCase()}'`);
-  if (flag) conditions.push(`flag = '${flag.toUpperCase()}'`);
-  if (imo) conditions.push(`imo = '${imo.toUpperCase()}'`);
-  if (mmsi) conditions.push(`ssvid = '${mmsi.toUpperCase()}'`);
+  if (callsign) conditions.push(`callsign = '${esc(callsign.toUpperCase())}'`);
+  if (flag) conditions.push(`flag = '${esc(flag.toUpperCase())}'`);
+  if (imo) conditions.push(`imo = '${esc(imo.toUpperCase())}'`);
+  if (mmsi) conditions.push(`ssvid = '${esc(mmsi.toUpperCase())}'`);
   if (activeTo)
-    conditions.push(`transmissionDateFrom < '${activeTo}T23:59:59Z'`);
+    conditions.push(`transmissionDateFrom < '${esc(activeTo)}T23:59:59Z'`);
   if (activeFrom)
-    conditions.push(`transmissionDateTo > '${activeFrom}T00:00:00Z'`);
-  if (name) conditions.push(`shipname LIKE '*${name.toUpperCase()}*'`);
+    conditions.push(`transmissionDateTo > '${esc(activeFrom)}T00:00:00Z'`);
+  if (name) conditions.push(`shipname LIKE '*${esc(name.toUpperCase())}*'`);
   if (owner)
-    conditions.push(`registryOwners.name LIKE '*${owner.toUpperCase()}*'`);
+    conditions.push(`registryOwners.name LIKE '*${esc(owner.toUpperCase())}*'`);
 
   if (conditions.length === 0) {
     return createErrorResponse(
@@ -158,7 +159,7 @@ export function register(server: McpServer) {
           )
           .optional()
           .describe(
-            'Filter for vessels active on or before this date (ISO 8601). IMPORTANT! this date is exclusive.',
+            'Filter for vessels active on or before this date (ISO 8601). IMPORTANT! this date is inclusive.',
           ),
         limit: z
           .number()
@@ -213,6 +214,7 @@ export function register(server: McpServer) {
     async (params) => {
       try {
         const output = await vesselSearch(params);
+        if ('isError' in output) return output;
         return createToolResponse(JSON.stringify(output, null, 2), output);
       } catch (err) {
         return createErrorResponse(

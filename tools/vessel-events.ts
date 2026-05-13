@@ -141,6 +141,8 @@ export async function vesselEvents({
       lat: e.position.lat,
       lon: e.position.lon,
       vesselId: e.vessel.id,
+      vesselName: e.vessel.name ?? null,
+      vesselFlag: e.vessel.flag ?? null,
       regions: {
         mpa: e.regions.mpa ?? [],
         eez: e.regions.eez ?? [],
@@ -162,7 +164,7 @@ export async function vesselEvents({
     total: data.total,
     limit: data.limit,
     offset: data.offset,
-    nextOffset: data.nextOffset || 0,
+    nextOffset: data.nextOffset ?? undefined,
     entries,
     mapUrl,
     ...(dataCaveats.length > 0 && { dataCaveats }),
@@ -193,7 +195,7 @@ export function register(server: McpServer) {
           .string()
           .regex(
             /^\d{4}-\d{2}-\d{2}$/,
-            'Use ISO 8601 date format YYYY-MM-DD for endDate. IMPORTANT! this date is exclusive.',
+            'Use ISO 8601 date format YYYY-MM-DD for endDate. IMPORTANT! this date is inclusive.',
           )
           .describe(
             'Only include events on/before this date. If omitted, defaults to today.',
@@ -258,7 +260,7 @@ export function register(server: McpServer) {
         total: z.number(),
         limit: z.number(),
         offset: z.number(),
-        nextOffset: z.number().optional(),
+        nextOffset: z.number().optional().describe('Offset to pass for the next page. Undefined when no further pages exist.'),
         entries: z.array(
           z.object({
             id: z.string(),
@@ -318,6 +320,7 @@ export function register(server: McpServer) {
     async (params) => {
       try {
         const output = await vesselEvents(params);
+        if ('isError' in output) return output;
         return createToolResponse(
           JSON.stringify(output, null, 2),
           output as Record<string, unknown>,

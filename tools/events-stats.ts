@@ -149,7 +149,7 @@ export function register(server: McpServer) {
           .string()
           .regex(
             /^\d{4}-\d{2}-\d{2}$/,
-            'Use ISO 8601 date format YYYY-MM-DD for endDate. IMPORTANT! this date is exclusive.',
+            'Use ISO 8601 date format YYYY-MM-DD for endDate. IMPORTANT! this date is inclusive.',
           )
           .describe(
             'Only include events on/before this date. If omitted, defaults to today.',
@@ -203,7 +203,7 @@ export function register(server: McpServer) {
           .describe('All unique flag states found in the matching events.'),
         numEvents: z
           .number()
-          .describe('Total number of matching events fetched (up to 500).'),
+          .describe('Total number of matching events.'),
         numFlags: z.number().describe('Number of unique flag states.'),
         numVessels: z.number().describe('Number of unique vessels.'),
         groups: z
@@ -229,6 +229,7 @@ export function register(server: McpServer) {
     async (params) => {
       try {
         const data = await eventsStats(params);
+        if ('isError' in data) return data;
         return createToolResponse(
           JSON.stringify(data, null, 2),
           data as Record<string, unknown>,
