@@ -56,8 +56,9 @@ export async function areaReport({
 
   const start = new Date(startDate);
   const end = new Date(endDate);
-  const msInYear = 365 * 24 * 60 * 60 * 1000;
-  if (end.getTime() - start.getTime() > msInYear) {
+  const oneYearAfterStart = new Date(start);
+  oneYearAfterStart.setFullYear(oneYearAfterStart.getFullYear() + 1);
+  if (end > oneYearAfterStart) {
     return createErrorResponse(
       'The report date range cannot exceed 1 year. Please reduce the range between startDate and endDate.',
     );

@@ -17,7 +17,7 @@
     "ais"
   ],
   "main": "./dist/index.js",
-  "bin": "./dist/bin.js",
+  "bin": { "gfw": "./dist/bin.js" },
   "files": [
     "dist/"
   ],

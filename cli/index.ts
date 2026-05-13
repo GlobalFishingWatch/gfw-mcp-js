@@ -1,5 +1,11 @@
 #!/usr/bin/env node
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { Command } from 'commander';
+
+const { version } = JSON.parse(
+  readFileSync(join(__dirname, '../package.json'), 'utf8'),
+) as { version: string };
 import { authLogin, authLogout, authStatus, resolveToken } from './auth.js';
 import { vesselSearch } from '../tools/vessel-search.js';
 import { vesselById } from '../tools/vessel-by-id.js';
@@ -56,7 +62,7 @@ async function run<T>(fn: () => Promise<T>) {
 
 const program = new Command();
 
-program.name('gfw').description('Global Fishing Watch CLI').version('1.0.0');
+program.name('gfw').description('Global Fishing Watch CLI').version(version);
 
 // ── mcp ───────────────────────────────────────────────────────────────────────
 program
