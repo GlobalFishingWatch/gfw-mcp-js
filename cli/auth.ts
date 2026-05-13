@@ -38,7 +38,7 @@ export function resolveToken(): string {
   if (!token) {
     throw new Error(
       'No GFW API token configured.\n' +
-        '  Set the GFW_TOKEN env var, or run:  gfw auth login',
+        '  Set the GFW_TOKEN env var, or run:  npx @globalfishingwatch/gfw-cli auth login',
     );
   }
   return token;
@@ -89,6 +89,8 @@ export function authStatus(): void {
   if (config?.token) {
     console.log(`Token source: ${CONFIG_FILE}`);
   } else {
-    console.log('No token configured. Run: gfw auth login');
+    console.log(
+      'No token configured. Run: npx @globalfishingwatch/gfw-cli auth login',
+    );
   }
 }

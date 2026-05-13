@@ -198,16 +198,16 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 
 ### Available MCP tools
 
-| Tool                  | Description                                                                                                                                                                                                      |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vessel-search`       | Search vessels by name, MMSI, IMO, callsign, flag, owner, or gear type                                                                                                                                           |
-| `vessel-by-id`        | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata, registry owners, and a map URL                                                                                                              |
-| `vessel-events`       | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                                                                     |
-| `events-stats`        | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events) |
-| `region-id-lookup`    | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                                                                          |
-| `region-geometry-url` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                        |
+| Tool                  | Description                                                                                                                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vessel-search`       | Search vessels by name, MMSI, IMO, callsign, flag, owner, or gear type                                                                                                                                                       |
+| `vessel-by-id`        | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata, registry owners, and a map URL                                                                                                                           |
+| `vessel-events`       | Retrieve fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type                                                                                                 |
+| `events-stats`        | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events)             |
+| `region-id-lookup`    | Resolve MPA, EEZ, or RFMO names to canonical region IDs                                                                                                                                                                      |
+| `region-geometry-url` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                                    |
 | `area-report`         | Calculate fishing, SAR, Sentinel-2, or AIS presence hours worldwide (`regionWorld: true`) or in a specific region (MPA, EEZ, RFMO); optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
-| `vessel-insights`     | Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel                                                           |
+| `vessel-insights`     | Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel                                                                       |
 
 ---
 
@@ -221,7 +221,7 @@ npx @globalfishingwatch/gfw-cli --help
 
 # Or install globally
 npm install -g @globalfishingwatch/gfw-cli
-gfw-mcp --help
+npx @globalfishingwatch/gfw-cli --help
 ```
 
 ### Authentication
@@ -415,7 +415,7 @@ npx @globalfishingwatch/gfw-cli area-report --region-world
 | Parameter                     | Format / values                                                                                                                                                                                                                                                                                                                                                |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--region-world`              | Boolean flag. Run the report for the entire world. Mutually exclusive with `--region-type` and `--region-id`.                                                                                                                                                                                                                                                  |
-| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`. Required when `--region-world` is not set.                                                                                                                                                                                                                                                                                          |
+| `--region-type`               | `MPA` \| `EEZ` \| `RFMO`. Required when `--region-world` is not set.                                                                                                                                                                                                                                                                                           |
 | `--region-id`                 | Canonical region ID. Required when `--region-world` is not set.                                                                                                                                                                                                                                                                                                |
 | `--start-date` / `--end-date` | `YYYY-MM-DD` (max range: 1 year)                                                                                                                                                                                                                                                                                                                               |
 | `--type`                      | `FISHING` (default) \| `PRESENCE` \| `SAR` \| `SENTINEL2` — `FISHING`: AIS-based fishing effort hours; `PRESENCE`: AIS vessel presence hours regardless of activity; `SAR`: Synthetic Aperture Radar vessel detection hours (satellite radar, independent of AIS); `SENTINEL2`: Sentinel-2 optical satellite imagery vessel detection hours                    |

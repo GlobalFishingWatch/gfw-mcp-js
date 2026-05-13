@@ -24,7 +24,7 @@ function fail(message: string, stdout = 'error'): never {
 }
 
 const TOKEN_URL = 'https://globalfishingwatch.org/our-apis/tokens';
-const TOKEN_HINT = `\n  You need a GFW API token. Generate one at: ${TOKEN_URL}\n  Then run: gfw auth login`;
+const TOKEN_HINT = `\n  You need a GFW API token. Generate one at: ${TOKEN_URL}\n  Then run: npx @globalfishingwatch/gfw-cli auth login`;
 
 function isAuthError(message: string): boolean {
   return /401|403|unauthorized|forbidden|no gfw api token/i.test(message);
@@ -227,7 +227,10 @@ program
 program
   .command('area-report')
   .description('Calculate fishing or presence hours in a region or worldwide')
-  .option('--region-world', 'Run report for the entire world (mutually exclusive with --region-type and --region-id)')
+  .option(
+    '--region-world',
+    'Run report for the entire world (mutually exclusive with --region-type and --region-id)',
+  )
   .option('--region-type <type>', 'Region type: MPA | EEZ | RFMO')
   .option('--region-id <id>', 'Canonical region ID')
   .requiredOption('--start-date <date>', 'Start date YYYY-MM-DD')
@@ -262,7 +265,10 @@ program
         speeds: opts.speeds,
         geartypes: opts.geartypes,
         groupBy: opts.groupBy as any,
-        topVesselsLimit: opts.topVesselsLimit !== undefined ? Number(opts.topVesselsLimit) : undefined,
+        topVesselsLimit:
+          opts.topVesselsLimit !== undefined
+            ? Number(opts.topVesselsLimit)
+            : undefined,
       }),
     ),
   );
