@@ -66,7 +66,10 @@ export function register(server: McpServer) {
         '"GAP" — AIS-off events (suspected dark activity periods where the vessel stopped broadcasting AIS); ' +
         '"COVERAGE" — AIS reception coverage percentage (how reliably the vessel was tracked via satellite); ' +
         '"VESSEL-IDENTITY-IUU-VESSEL-LIST" — number of times the vessel appeared on IUU (Illegal, Unreported, Unregulated) vessel lists during the period. ' +
-        'Multiple types can be requested in a single call. Results are returned as a single object with one field per requested type.',
+        'Multiple types can be requested in a single call. Results are returned as a single object with one field per requested type. ' +
+        'IMPORTANT: Before calling this tool, check if the vessel(s) have related identities (other AIS identities linked to the same physical vessel, available via vessel-by-id relatedIdentities field). ' +
+        'If related identities exist, ask the user whether they want to include those vessel IDs in the insights query as well. ' +
+        'Only proceed with the vesselIds the user confirms.',
       inputSchema: {
         vesselIds: z
           .array(z.string())
@@ -201,7 +204,7 @@ export function register(server: McpServer) {
         }
         if (output.coverage) {
           lines.push(
-            `COVERAGE: ${output.coverage.percentage.toFixed(1)}% AIS reception (${output.coverage.blocksWithPositions}/${output.coverage.blocks} blocks)`,
+            `COVERAGE: ${(output.coverage.percentage ?? 0).toFixed(1)}% AIS reception (${output.coverage.blocksWithPositions}/${output.coverage.blocks} blocks)`,
           );
         }
         if (output.vesselIdentity) {

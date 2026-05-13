@@ -31,6 +31,7 @@ When using this skill, the agent must follow these rules:
 - **Always show data caveats:** When any tool returns a `dataCaveats` array, you MUST display every item in that array to the user as part of your response. Each item is a markdown string — render it as markdown. Never omit or hide these.
 - **When in doubt, ask the user:** If you are unsure about any parameter value, filter, or option to use, ask the user for clarification before proceeding. Do not make assumptions without confirming them with the user first.
 - **Use `vessel-by-id` when you have a GFW vessel ID:** If you already have the GFW vessel ID, use the `vessel-by-id` tool to fetch the full vessel profile directly, instead of using `vessel-search`.
+- **Ask about related identities before any vessel-scoped query:** Before running any tool that accepts vessel IDs (`vessel-insights`, `vessel-events`), check whether those vessels have `relatedIdentities` (available from `vessel-by-id`). If any related identities exist, ask the user whether to include them in the query. Only add the IDs the user confirms. If `relatedIdentities` is empty or not yet fetched, proceed without asking.
 
 ---
 
@@ -165,6 +166,7 @@ npx @globalfishingwatch/gfw-cli vessel-events --event-type <fishing|encounter|po
 - `--confidence` is only valid for `port_visit`; default is `4` (highest confidence). Only change this if the user explicitly requests lower confidence levels.
 - `--encounter-types` is only valid for `encounter`; default is `CARRIER-FISHING SUPPORT-FISHING`. Only change this if the user explicitly requests other types.
 - Use `--offset` and `--limit` to paginate through large result sets.
+- If querying by `--vessel-id`, check for related identities first (see agent behavior guidelines) and ask the user whether to include them.
 
 #### events-stats
 
@@ -366,6 +368,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 - All four parameters (`vesselIds`, `startDate`, `endDate`, `includes`) are required.
 - `vesselIds` must contain at least one ID. Use `vessel-by-id` or `vessel-search` first if you only have the vessel name or identifiers.
+- **Ask about related identities before running:** If the vessel(s) have `relatedIdentities` (from `vessel-by-id`), ask the user whether to include those vessel IDs in the query too. Only add the IDs the user confirms. If `relatedIdentities` is empty or unknown, proceed without asking.
 
 ---
 
@@ -382,6 +385,7 @@ When used as an MCP server, the same capabilities are available as tools:
 - `confidence` only valid for `port_visit` (default `[4]`); only change if the user asks.
 - `encounterTypes` only valid for `encounter` (default `CARRIER-FISHING`, `SUPPORT-FISHING`); only change if the user asks.
 - `regionType` and `regionId` must always be provided together.
+- If querying by `vesselId`, check for related identities first (see agent behavior guidelines) and ask the user whether to include them.
 
 ---
 
