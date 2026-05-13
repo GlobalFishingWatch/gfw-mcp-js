@@ -107,7 +107,7 @@ Retrieve one or more vessels by their GFW vessel IDs. Returns the same metadata 
 npx @globalfishingwatch/gfw-cli vessel-by-id --ids <id> [<id2> ...]
 ```
 
-**Returns:** `{ total, results[] }` — same fields as `vessel-search` results: `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `registryOwners`, `mapUrl`.
+**Returns:** `{ total, results[] }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `registryOwners`, `mapUrl`, and `relatedIdentities` (array of other AIS identities linked to the same physical vessel — different MMSI or name/flag periods — each with its own `mapUrl`; empty array if none).
 
 **When to use:** When you already know the GFW vessel ID(s) and want to fetch their full profiles directly, without a search query.
 
@@ -338,7 +338,7 @@ When used as an MCP server, the same capabilities are available as tools:
 
 **Purpose:** Retrieve one or more full vessel profiles by their GFW vessel IDs.
 
-**Returns:** `{ total, results[], dataCaveats? }` — same fields as `vessel-search` results, including `registryOwners` and `mapUrl`. `dataCaveats` is an array of markdown strings — display every item when present.
+**Returns:** `{ total, results[], dataCaveats? }` — each result includes `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `gearType`, `activeFrom`, `activeTo`, `registryOwners`, `mapUrl`, and `relatedIdentities`. `relatedIdentities` is an array of other AIS identities linked to the same physical vessel (different MMSI or name/flag periods), each with `vesselId`, `name`, `mmsi`, `imo`, `callsign`, `flag`, `activeFrom`, `activeTo`, and `mapUrl`. Empty array if none — show to the user when present. `dataCaveats` is an array of markdown strings — display every item when present.
 
 **When to use:** When you already know the GFW vessel ID(s) and want to skip a search query.
 

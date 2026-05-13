@@ -201,7 +201,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | Tool                  | Description                                                                                                                                                                                                      |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `vessel-search`       | Search vessels by name, MMSI, IMO, callsign, flag, owner, or gear type. To avoid misinterpretation, please check data caveats [here](https://globalfishingwatch.org/our-apis/documentation#vessel-api-vessel-identity-information) and for more details refer to [GFW Vessel API](https://globalfishingwatch.org/our-apis/documentation#vessels-api). |
-| `vessel-by-id`        | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata, registry owners, and a map URL |
+| `vessel-by-id`        | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata, registry owners, a map URL, and `relatedIdentities` (other AIS identities linked to the same physical vessel) |
 | `vessel-events`       | Retrieve apparent fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type. To avoid misinterpretation, please check data caveats [here](https://globalfishingwatch.org/our-apis/documentation#how-are-the-events-estimated) and for more details refer to [GFW Events API](https://globalfishingwatch.org/our-apis/documentation#events-api) |
 | `events-stats`        | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events). For more details check [Stats API](https://globalfishingwatch.org/our-apis/documentation#statistics-on-fishing-activity-worldwide) |
 | `region-id-lookup`    | Resolve MPA, EEZ, or RFMO names to canonical region IDs. To check the sources of the regions, please check [here](https://globalfishingwatch.org/our-apis/documentation#exclusive-economic-zone-boundaries-definition) |
@@ -290,6 +290,8 @@ npx @globalfishingwatch/gfw-cli vessel-by-id --ids <id> [<id2> ...]
 npx @globalfishingwatch/gfw-cli vessel-by-id --ids abc123
 npx @globalfishingwatch/gfw-cli vessel-by-id --ids abc123 def456 ghi789
 ```
+
+Each result includes `relatedIdentities` — an array of other AIS identities linked to the same physical vessel (different MMSI or name/flag periods), each with its own `mapUrl`. Empty array if none.
 
 #### `vessel-events`
 
