@@ -1,6 +1,6 @@
 # @globalfishingwatch/gfw-mcp-js
 
-Access [Global Fishing Watch](https://globalfishingwatch.org) data from any MCP-compatible AI assistant or directly from the terminal. Search vessels, retrieve fishing and port-visit events, look up Marine Protected Areas, Exclusive Economic Zones and RFMOs, calculate fishing activity hours within any region, and compute aggregate event statistics.
+Access [Global Fishing Watch](https://globalfishingwatch.org) data from any MCP-compatible AI assistant or directly from the terminal. Search vessels, retrieve apparent fishing activity and port-visit events, look up Marine Protected Areas, Exclusive Economic Zones and RFMOs, calculate apparent fishing activity hours within any region, and compute aggregate event statistics.
 
 This package can be used in two modes:
 
@@ -198,6 +198,7 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 
 ### Available MCP tools
 
+<<<<<<< HEAD
 | Tool                  | Description                                                                                                                                                                                                                  |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `vessel-search`       | Search vessels by name, MMSI, IMO, callsign, flag, owner, or gear type                                                                                                                                                       |
@@ -208,6 +209,18 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | `region-geometry-url` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                                    |
 | `area-report`         | Calculate fishing, SAR, Sentinel-2, or AIS presence hours worldwide (`regionWorld: true`) or in a specific region (MPA, EEZ, RFMO); optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype |
 | `vessel-insights`     | Retrieve fishing activity, AIS gap, coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel                                                                       |
+=======
+| Tool                  | Description                                                                                                                                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vessel-search`       | Search vessels by name, MMSI, IMO, callsign, flag, owner, or gear type. To avoid misinterpretation, please check data caveats [here](https://globalfishingwatch.org/our-apis/documentation#vessel-api-vessel-identity-information) and for more details refer to [GFW Vessel API](https://globalfishingwatch.org/our-apis/documentation#vessels-api).                                                                                                                                           |
+| `vessel-by-id`        | Fetch full vessel profile(s) by GFW vessel ID(s); returns metadata, registry owners, and a map URL                                                                                                              |
+| `vessel-events`       | Retrieve apparent fishing, encounter, port visit, or loitering events; filter by vessel, region, date, confidence, and encounter type. To avoid misinterpretation, please check data caveats [here](https://globalfishingwatch.org/our-apis/documentation#how-are-the-events-estimated) and for more details refer to [GFW Events API](https://globalfishingwatch.org/our-apis/documentation#events-api)                                                                                     |
+| `events-stats`        | Compute aggregate statistics (total events, unique vessels, flag breakdown) over a date range, optionally filtered by region and grouped by flag or gear type; returns a GFW map URL (except for fishing events). For more details check [Stats API](https://globalfishingwatch.org/our-apis/documentation#statistics-on-fishing-activity-worldwide) |
+| `region-id-lookup`    | Resolve MPA, EEZ, or RFMO names to canonical region IDs. To check the sources of the regions, please check [here](https://globalfishingwatch.org/our-apis/documentation#exclusive-economic-zone-boundaries-definition)                                                                                                                                                          |
+| `region-geometry-url` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO                                                                                                                                        |
+| `area-report`         | Calculate apparent fishing, SAR, Sentinel-2, or AIS presence hours worldwide (`regionWorld: true`) or in a specific region (MPA, EEZ, RFMO); optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype. To avoid misinterpretations please check data caveats about [AIS presence here](https://globalfishingwatch.org/our-apis/documentation#ais-vessel-presence-caveats) and about [SAR Vessel Detections here](https://globalfishingwatch.org/our-apis/documentation#sar-vessel-detections-data-caveats) |
+| `vessel-insights`     | Retrieve apparent fishing activity, AIS off event, AIS coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel. To avoid misinterpretation, review [data caveats here](https://globalfishingwatch.org/our-apis/documentation#insights-api-fishing-detected-in-no-take-mpas). For more details refer to [GFW Insights API](https://globalfishingwatch.org/our-apis/documentation#insights-api)                                                           |
+>>>>>>> 4c62f51c78e4872078728c06f29f473113ea4ae5
 
 ---
 
