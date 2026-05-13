@@ -11,6 +11,7 @@ const DATASET = 'public-global-vessel-identity:v4.0';
 export async function vesselById({ ids }: { ids: string[] }) {
   const params: Record<string, string> = {
     'datasets[0]': DATASET,
+    'includes[0]': 'POTENTIAL_RELATED_SELF_REPORTED_INFO',
     ...Object.fromEntries(ids.map((id, i) => [`ids[${i}]`, id])),
   };
 
