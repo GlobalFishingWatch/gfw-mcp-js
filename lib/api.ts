@@ -22,7 +22,7 @@ export async function gfwFetch(
   }
 
   const apiKey = resolveToken();
-  console.error(`Making GFW API request to ${url}`);
+  if (process.env.GFW_DEBUG) console.error(`GFW API request: ${url.pathname}`);
   const response = await fetch(url.toString(), {
     headers: {
       ...(apiKey && { Authorization: `Bearer ${apiKey}` }),

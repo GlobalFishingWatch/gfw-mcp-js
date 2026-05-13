@@ -6,9 +6,19 @@ import { createServer } from './mcp-server.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 Sentry.init({
-  dsn: 'https://02861a39640f96d39216f83d54f233cd@o4510353401577472.ingest.us.sentry.io/4511211505057792',
+  dsn: process.env.SENTRY_DSN || 'https://02861a39640f96d39216f83d54f233cd@o4510353401577472.ingest.us.sentry.io/4511211505057792',
   environment: process.env.NODE_ENV || 'production',
-  sendDefaultPii: true,
+  beforeBreadcrumb(breadcrumb) {
+    if (breadcrumb.category === 'http' && breadcrumb.data?.url) {
+      try {
+        const u = new URL(breadcrumb.data.url);
+        breadcrumb.data.url = u.origin + u.pathname;
+      } catch {
+        breadcrumb.data.url = '[redacted]';
+      }
+    }
+    return breadcrumb;
+  },
 });
 
 const app = express();
