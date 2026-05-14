@@ -1,6 +1,8 @@
 import { fetch, ProxyAgent } from 'undici';
 import { resolveToken } from '../cli/auth';
 
+const { version } = require('../package.json');
+
 const GFW_BASE = 'https://gateway.api.globalfishingwatch.org';
 
 const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
@@ -26,11 +28,10 @@ export async function gfwFetch(
   const response = await fetch(url.toString(), {
     headers: {
       ...(apiKey && { Authorization: `Bearer ${apiKey}` }),
-      Referer: 'gfw-mcp-js',
+      'User-Agent': `gfw-mcp-js/${version}`,
     },
     dispatcher,
   } as any);
-
   if (!response.ok) {
     throw new Error(`GFW API error ${response.status}: ${response.statusText}`);
   }
