@@ -10,7 +10,7 @@ module "develop" {
   docker_image          = "us-central1-docker.pkg.dev/gfw-int-infrastructure/api/gfw-mcp-js:latest-dev"
   api_name              = "gfw-mcp-js"
   short_environment     = "dev"
-  service_account       = "api-gfw-mcp-js@gfw-development.iam.gserviceaccount.com"
+  service_account       = "api-gfw-mcp-js-dev@gfw-development.iam.gserviceaccount.com"
   allow_unauthenticated = true
   memory                = "512Mi"
   cpu                   = 1
@@ -40,7 +40,7 @@ module "staging" {
   docker_image          = "us-central1-docker.pkg.dev/gfw-int-infrastructure/api/gfw-mcp-js:latest-sta"
   api_name              = "gfw-mcp-js"
   short_environment     = "sta"
-  service_account       = "api-gfw-mcp-js@gfw-development.iam.gserviceaccount.com"
+  service_account       = "api-gfw-mcp-js-sta@gfw-development.iam.gserviceaccount.com"
   allow_unauthenticated = true
   memory                = "512Mi"
   cpu                   = 1
@@ -70,7 +70,7 @@ module "production" {
   docker_image          = "us-central1-docker.pkg.dev/gfw-int-infrastructure/api/gfw-mcp-js:latest-pro"
   api_name              = "gfw-mcp-js"
   short_environment     = "pro"
-  service_account       = "api-gfw-mcp-js@gfw-production.iam.gserviceaccount.com"
+  service_account       = "api-gfw-mcp-js-pro@gfw-production.iam.gserviceaccount.com"
   allow_unauthenticated = true
   memory                = "512Mi"
   cpu                   = 1

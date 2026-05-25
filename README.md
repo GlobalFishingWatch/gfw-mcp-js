@@ -243,7 +243,7 @@ The client sends its GFW API token as `Authorization: Bearer <token>`. The serve
 {
   "mcpServers": {
     "gfw": {
-      "url": "https://your-service.run.app/mcp",
+      "url": "https://mcp.globalfishingwatch.org/mcp",
       "headers": { "Authorization": "Bearer your_gfw_api_key_here" }
     }
   }
@@ -253,7 +253,7 @@ The client sends its GFW API token as `Authorization: Bearer <token>`. The serve
 #### Claude Code
 
 ```bash
-claude mcp add --transport http gfw https://your-service.run.app/mcp \
+claude mcp add --transport http gfw https://mcp.globalfishingwatch.org/mcp \
   --header "Authorization: Bearer your_gfw_api_key_here"
 ```
 
@@ -265,7 +265,7 @@ claude mcp add --transport http gfw https://your-service.run.app/mcp \
 {
   "mcpServers": {
     "gfw": {
-      "url": "https://your-service.run.app/mcp",
+      "url": "https://mcp.globalfishingwatch.org/mcp",
       "headers": { "Authorization": "Bearer your_gfw_api_key_here" }
     }
   }
@@ -280,7 +280,7 @@ claude mcp add --transport http gfw https://your-service.run.app/mcp \
 {
   "mcpServers": {
     "gfw": {
-      "url": "https://your-service.run.app/mcp",
+      "url": "https://mcp.globalfishingwatch.org/mcp",
       "headers": { "Authorization": "Bearer your_gfw_api_key_here" }
     }
   }
@@ -296,7 +296,7 @@ claude mcp add --transport http gfw https://your-service.run.app/mcp \
   "servers": {
     "gfw": {
       "type": "http",
-      "url": "https://your-service.run.app/mcp",
+      "url": "https://mcp.globalfishingwatch.org/mcp",
       "headers": { "Authorization": "Bearer your_gfw_api_key_here" }
     }
   }
@@ -306,7 +306,7 @@ claude mcp add --transport http gfw https://your-service.run.app/mcp \
 ### Health check
 
 ```bash
-curl https://your-service.run.app/health
+curl https://mcp.globalfishingwatch.org/health
 # {"status":"ok"}
 ```
 
