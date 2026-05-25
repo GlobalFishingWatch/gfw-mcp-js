@@ -35,7 +35,7 @@
     "test:integration": "vitest run tests/integration"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.22.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@sentry/node": "^10.48.0",
     "axios": "^1.13.6",
     "commander": "^14.0.3",
