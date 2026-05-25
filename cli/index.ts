@@ -78,6 +78,17 @@ program
     await server.connect(transport);
   });
 
+// ── mcp-server ────────────────────────────────────────────────────────────────
+program
+  .command('mcp-server')
+  .description('Start the GFW MCP HTTP server (for Cloud Run / remote use)')
+  .option('--port <n>', 'Port (overrides PORT env var)', parseInt)
+  .action(async (opts) => {
+    if (opts.port) process.env.PORT = String(opts.port);
+    const { startHttpServer } = await import('../server/http.js');
+    await startHttpServer();
+  });
+
 // ── auth ──────────────────────────────────────────────────────────────────────
 const auth = program.command('auth').description('Manage GFW API credentials');
 

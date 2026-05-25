@@ -2,9 +2,10 @@
 
 Access [Global Fishing Watch](https://globalfishingwatch.org) data from any MCP-compatible AI assistant or directly from the terminal. Search vessels, retrieve apparent fishing activity and port-visit events, look up Marine Protected Areas, Exclusive Economic Zones and RFMOs, calculate apparent fishing activity hours within any region, and compute aggregate event statistics.
 
-This package can be used in two modes:
+This package can be used in three modes:
 
-- **MCP server** — connect any MCP-compatible AI assistant (Claude, Cursor, Windsurf, VS Code…) to GFW data
+- **MCP server (stdio)** — connect any MCP-compatible AI assistant (Claude, Cursor, Windsurf, VS Code…) to GFW data via a local process
+- **MCP server (HTTP)** — deploy as a Cloud Run service; AI clients connect via URL with no local install required
 - **CLI** — query GFW data directly from the terminal
 
 ## Requirements
@@ -208,6 +209,115 @@ Then replace `npx -y @globalfishingwatch/gfw-cli` with `node /absolute/path/to/g
 | `region-geometry-url` | Get the URL to fetch the GeoJSON geometry of a specific MPA, EEZ, or RFMO |
 | `area-report`         | Calculate apparent fishing, SAR, Sentinel-2, or AIS presence hours worldwide (`regionWorld: true`) or in a specific region (MPA, EEZ, RFMO); optional flag, gear type, vessel type, and speed filters; supports groupBy flag/geartype. To avoid misinterpretations please check data caveats about [AIS presence here](https://globalfishingwatch.org/our-apis/documentation#ais-vessel-presence-caveats) and about [SAR Vessel Detections here](https://globalfishingwatch.org/our-apis/documentation#sar-vessel-detections-data-caveats) |
 | `vessel-insights`     | Retrieve apparent fishing activity, AIS off event, AIS coverage, and IUU vessel list insights for one or more vessels over a date range; returns a GFW map URL per vessel. To avoid misinterpretation, review [data caveats here](https://globalfishingwatch.org/our-apis/documentation#insights-api-fishing-detected-in-no-take-mpas). For more details refer to [GFW Insights API](https://globalfishingwatch.org/our-apis/documentation#insights-api) |
+
+---
+
+## Remote MCP Server (Cloud Run)
+
+Deploy as an HTTP service so AI clients connect via URL — no local Node.js install required on the client side. Each client passes its own GFW API token as a Bearer header; the server forwards it to the GFW API transparently.
+
+### Deploy to Cloud Run
+
+```bash
+# Build and push image
+gcloud builds submit --tag gcr.io/YOUR_PROJECT/gfw-mcp .
+
+# Deploy
+gcloud run deploy gfw-mcp \
+  --image gcr.io/YOUR_PROJECT/gfw-mcp \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8080
+```
+
+No secrets needed in the deployment — clients supply their own GFW token per request.
+
+### Client configuration
+
+The client sends its GFW API token as `Authorization: Bearer <token>`. The server uses it to call the GFW API on behalf of the client.
+
+#### Claude Desktop
+
+```json
+{
+  "mcpServers": {
+    "gfw": {
+      "url": "https://your-service.run.app/mcp",
+      "headers": { "Authorization": "Bearer your_gfw_api_key_here" }
+    }
+  }
+}
+```
+
+#### Claude Code
+
+```bash
+claude mcp add --transport http gfw https://your-service.run.app/mcp \
+  --header "Authorization: Bearer your_gfw_api_key_here"
+```
+
+#### Cursor
+
+`.cursor/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "gfw": {
+      "url": "https://your-service.run.app/mcp",
+      "headers": { "Authorization": "Bearer your_gfw_api_key_here" }
+    }
+  }
+}
+```
+
+#### Windsurf
+
+`~/.codeium/windsurf/mcp_config.json`
+
+```json
+{
+  "mcpServers": {
+    "gfw": {
+      "url": "https://your-service.run.app/mcp",
+      "headers": { "Authorization": "Bearer your_gfw_api_key_here" }
+    }
+  }
+}
+```
+
+#### VS Code (Copilot)
+
+`.vscode/mcp.json`
+
+```json
+{
+  "servers": {
+    "gfw": {
+      "type": "http",
+      "url": "https://your-service.run.app/mcp",
+      "headers": { "Authorization": "Bearer your_gfw_api_key_here" }
+    }
+  }
+}
+```
+
+### Health check
+
+```bash
+curl https://your-service.run.app/health
+# {"status":"ok"}
+```
+
+### stdio vs HTTP comparison
+
+| | stdio (local) | HTTP (Cloud Run) |
+|---|---|---|
+| Install required | Node.js 18+ | None |
+| Token location | `GFW_TOKEN` env var or `auth login` | `Authorization` header per request |
+| Multi-user | No | Yes |
+| Command | `gfw mcp` | `gfw mcp-server` |
 
 ---
 

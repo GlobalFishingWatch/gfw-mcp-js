@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'async_hooks';
 import { fetch, ProxyAgent } from 'undici';
 import { resolveToken } from '../cli/auth';
 
@@ -8,12 +9,10 @@ const GFW_BASE = 'https://gateway.api.globalfishingwatch.org';
 const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
 const dispatcher = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
 
-/**
- * Fetch wrapper for the GFW API.
- * Automatically injects the Bearer token from API_KEY env var when present.
- * Respects HTTPS_PROXY / HTTP_PROXY environment variables.
- * Throws an Error if the response is not OK.
- */
+// Stores the per-request GFW token injected by the HTTP server transport.
+// Falls back to env / config when no context is active (stdio mode).
+export const tokenStorage = new AsyncLocalStorage<string>();
+
 export async function gfwFetch(
   path: string,
   params?: Record<string, string>,
@@ -23,7 +22,7 @@ export async function gfwFetch(
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   }
 
-  const apiKey = resolveToken();
+  const apiKey = tokenStorage.getStore() ?? resolveToken();
   if (process.env.GFW_DEBUG) console.error(`GFW API request: ${url.pathname}`);
   const response = await fetch(url.toString(), {
     headers: {
